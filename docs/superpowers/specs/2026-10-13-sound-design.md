@@ -44,8 +44,9 @@ Out of scope: volume slider and other sound settings (they move into the future 
 | `full` | The "Selection full" reaction. | Dull low thud. |
 | `saved` | A score is saved successfully. | Two-note rising chime. |
 
-Ticks: Normal (10 s) ticks at 2 and 1 (with the final tock); Easy (20 s) from 5; Extreme (3 s) only in the final
-second. The tick tracker resets on every `Clock.start`, so no tick leaks into the next question.
+Ticks follow the seconds shown on screen (rounded up): Normal (10 s) turns red at 2.5 s left, which shows as
+"3s", so it ticks at 3, 2 and 1 (with the final tock); Easy (20 s) from 5; Hard (5 s) at 2 and 1; Extreme (3 s)
+only in the final second. The tick tracker resets on every `Clock.start`, so no tick leaks into the next question.
 
 ## Architecture
 
@@ -71,8 +72,8 @@ Sound.setMuted(bool) / Sound.isMuted()   // persisted in LS key 'geogryphon.mute
 
 `js/game.js`
 - `onCorrect`: `Sound.play('correct', r)` with the ratio it already reads.
-- `applyPenalty` (Map/Trivia wrong): read `Clock.ratio()` first, `Sound.play('wrong', 1 - r)`; if the penalty
-  ran out the clock, also `Sound.play('timesUp')`.
+- `applyPenalty` (Map/Trivia wrong): read `Clock.ratio()` before the penalty, `Sound.play('wrong', 1 - r)`; if
+  the penalty ran out the clock, play `wrong` at intensity 1 and then `timesUp`.
 - `onFlagAnswer` wrong branch: `Sound.play('wrong', 1 - Clock.ratio())` before `lose(...)`.
 - `beginAsking`: the clock's expire callback plays `timesUp` before `lose('Time’s up!')`.
 - `Clock`: `start` calls `Sound.resetTick()`; the frame loop calls `Sound.tick(Math.ceil(r * max))` while
@@ -85,7 +86,8 @@ Sound.setMuted(bool) / Sound.isMuted()   // persisted in LS key 'geogryphon.mute
 
 `js/main.js`
 - Delegated `pointerover` and `click` listeners on `document` for targets matching
-  `button, .difficulty label, .answer, .mapControl` (hover only when entering a new target, not moving inside it).
+  `button, .difficulty label, .answer, .mapControl` (hover only when entering a new target, not moving inside it,
+  and never for touch, where a tap would otherwise play hover and click together).
   Keys 1-4 already call `.click()`, so they get the click sound.
 - The Space key branches (confirm, skip reveal) call `Sound.play('click')`.
 - First `pointerdown` / `keydown` anywhere calls `Sound.unlock()`.
