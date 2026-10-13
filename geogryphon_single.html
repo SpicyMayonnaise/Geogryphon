@@ -1,17 +1,63 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Endless Geography Trivia V13.0</title>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Geogryphon V14.0</title>
 
 <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
 <script src="https://cdn.amcharts.com/lib/5/map.js"></script>
 <script src="https://cdn.amcharts.com/lib/5/geodata/worldLow.js"></script>
 
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;600;700&display=swap">
 <style>
 /* Endless Geography Trivia styles */
 :root {
-  --bg:#061324;
-  --cyan:#22d3ee;
-  --muted:#94a3b8;
+  /* colour */
+  --bg:#1b1446;
+  --surface-1:#261d5e;
+  --surface-2:#3b2f8f;
+  --edge:#120d33;
+  --text:#ffffff;
+  --text-2:#b9b0ff;
+  --accent:#ffd23f;
+  --accent-edge:#c99c00;
+  --on-accent:#1b1446;
+  --hot:#ff5d73;
+  --good:#3ee08f;
+  --bad:#ff4d6d;
+  --map-land:#4a3fb0;
+  --map-sea:#140f38;
+  --scrim:#0d0a26e6;
+  --line:#ffffff1f;
+  --flag-frame:#d5dde8;
+  /* type */
+  --font-display:'Fredoka',system-ui,sans-serif;
+  --font-body:'Nunito',system-ui,sans-serif;
+  --fs-12:.75rem;
+  --fs-14:.875rem;
+  --fs-18:1.125rem;
+  --fs-28:1.75rem;
+  --fs-44:2.75rem;
+  /* fluid headline sizes: grow from a scale step with the viewport */
+  --fs-hero:clamp(2.75rem,7vw,5rem);
+  --fs-question:clamp(1.75rem,3vw,2.5rem);
+  --fs-reaction:clamp(1.75rem,6vw,4.5rem);
+  --fw-500:500;
+  --fw-600:600;
+  --fw-700:700;
+  /* shape and space */
+  --r-8:8px;
+  --r-14:14px;
+  --r-24:24px;
+  --r-pill:999px;
+  --s-4:4px;
+  --s-8:8px;
+  --s-12:12px;
+  --s-16:16px;
+  --s-24:24px;
+  --s-32:32px;
+  --pad:var(--s-16);
+  /* motion */
+  --press:120ms;
 }
 
 * {
@@ -20,27 +66,116 @@
 
 body {
   margin:0;
-  font:16px system-ui;
-  color:#fff;
-  background:radial-gradient(circle at 10% 0,#0e749044,transparent 35%),var(--bg);
+  font-family:var(--font-body);
+  font-size:var(--fs-18);
+  font-weight:var(--fw-500);
+  color:var(--text);
+  background:var(--bg);
 }
 
 button,input {
-  font:inherit;
+  font-family:inherit;
+  font-size:inherit;
+}
+
+h1,h2,.stat b,.mode b {
+  font-family:var(--font-display);
+  font-weight:var(--fw-700);
 }
 
 .wrap {
   max-width:1900px;
   min-height:100vh;
   margin:auto;
-  padding:14px;
+  padding:var(--pad);
 }
 
 .hidden {
   display:none!important;
 }
 
+/* ---------- Button: pressable, with a darker bottom edge that squashes on press ---------- */
+
+.btn {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:var(--s-8);
+  padding:var(--s-12) var(--s-16);
+  border:0;
+  border-radius:var(--r-14);
+  font-family:var(--font-display);
+  font-size:var(--fs-18);
+  font-weight:var(--fw-600);
+  text-decoration:none;
+  cursor:pointer;
+  transition:transform var(--press),box-shadow var(--press),background var(--press);
+}
+
+.btn-primary {
+  background:var(--accent);
+  color:var(--on-accent);
+  box-shadow:0 4px 0 var(--accent-edge);
+}
+
+.btn-secondary {
+  background:var(--surface-2);
+  color:var(--text);
+  box-shadow:0 4px 0 var(--edge);
+}
+
+.btn-ghost {
+  background:transparent;
+  color:var(--text-2);
+  box-shadow:inset 0 0 0 2px var(--surface-2);
+}
+
+.btn-primary:hover {
+  filter:brightness(1.06);
+}
+
+.btn-secondary:hover,.btn-ghost:hover {
+  color:var(--accent);
+}
+
+.btn-primary:active {
+  transform:translateY(2px);
+  box-shadow:0 2px 0 var(--accent-edge);
+}
+
+.btn-secondary:active {
+  transform:translateY(2px);
+  box-shadow:0 2px 0 var(--edge);
+}
+
+.btn:disabled {
+  background:var(--surface-1);
+  color:var(--text-2);
+  box-shadow:none;
+  filter:none;
+  cursor:not-allowed;
+  transform:none;
+}
+
+#backBtn {
+  margin-bottom:var(--s-8);
+  padding:var(--s-4) var(--s-12);
+  font-size:var(--fs-14);
+}
+
+/* ---------- Cards ---------- */
+
+.card,.settings,.mode,.modalin,.studyInner {
+  background:var(--surface-1);
+  border:0;
+  border-radius:var(--r-24);
+  color:var(--text);
+}
+
+/* ---------- Menu ---------- */
+
 .menu {
+  position:relative;
   min-height:92vh;
   min-height:92dvh;
   display:grid;
@@ -52,33 +187,40 @@ button,input {
 }
 
 .kicker {
-  color:var(--cyan);
-  font-weight:900;
-  letter-spacing:.2em;
+  color:var(--hot);
+  font-family:var(--font-display);
+  font-weight:var(--fw-700);
+  font-size:var(--fs-14);
+  letter-spacing:.14em;
+  text-transform:uppercase;
 }
 
 .menu h1 {
-  font-size:clamp(3rem,8vw,6rem);
-  line-height:.95;
-  margin:14px 0;
+  font-size:var(--fs-hero);
+  line-height:1;
+  margin:var(--s-12) 0;
 }
 
 .muted {
-  color:var(--muted);
+  color:var(--text-2);
 }
 
 .settings {
-  margin:16px 0 14px;
-  padding:18px;
-  border:1px solid #ffffff18;
-  background:#ffffff08;
-  border-radius:22px;
+  margin:var(--s-16) 0;
+  padding:var(--s-16) var(--s-24);
 }
 
+.settings h2 {
+  margin:0 0 var(--s-12);
+  font-size:var(--fs-18);
+  color:var(--text-2);
+}
+
+/* Segmented control */
 .difficulty {
   display:grid;
   grid-template-columns:repeat(4,1fr);
-  gap:8px;
+  gap:var(--s-8);
 }
 
 .difficulty input {
@@ -87,195 +229,234 @@ button,input {
 }
 
 .difficulty label {
-  padding:11px;
+  padding:var(--s-12);
   text-align:center;
-  border:1px solid #ffffff18;
-  border-radius:12px;
-  background:#ffffff08;
+  border-radius:var(--r-14);
+  background:var(--surface-2);
+  box-shadow:0 4px 0 var(--edge);
+  font-family:var(--font-display);
+  font-weight:var(--fw-600);
   cursor:pointer;
-  font-weight:800;
+  transition:transform var(--press),box-shadow var(--press);
 }
 
 .difficulty label small {
   display:block;
-  color:var(--muted);
+  color:var(--text-2);
+  font-family:var(--font-body);
+  font-size:var(--fs-14);
+}
+
+.difficulty label:hover {
+  color:var(--accent);
 }
 
 .difficulty input:checked+label {
-  border-color:var(--cyan);
-  background:#22d3ee20;
-  color:var(--cyan);
+  background:var(--accent);
+  color:var(--on-accent);
+  box-shadow:0 2px 0 var(--accent-edge);
+  transform:translateY(2px);
 }
 
+.difficulty input:checked+label small {
+  color:var(--on-accent);
+}
+
+/* Mode cards */
 .modes {
   display:grid;
   grid-template-columns:repeat(3,1fr);
-  gap:14px;
-}
-
-.mode,.answer,.card {
-  border:1px solid #ffffff18;
-  background:#ffffff0b;
-  border-radius:24px;
-  color:#fff;
+  gap:var(--s-16);
 }
 
 .mode {
   width:100%;
-  padding:25px;
+  padding:var(--s-24);
   text-align:left;
   cursor:pointer;
+  box-shadow:0 4px 0 var(--edge);
+  transition:transform var(--press),box-shadow var(--press);
+  font-size:var(--fs-28);
 }
 
-.mode:hover,.answer:hover {
-  border-color:var(--cyan);
-  background:#22d3ee12;
+.mode:hover {
+  box-shadow:0 4px 0 var(--edge),inset 0 0 0 2px var(--accent);
+}
+
+.mode:active {
+  transform:translateY(2px);
+  box-shadow:0 2px 0 var(--edge);
 }
 
 .mode b {
   display:block;
-  font-size:1.45rem;
-  margin:14px 0 5px;
+  font-size:var(--fs-28);
+  margin:var(--s-12) 0 var(--s-4);
+}
+
+.mode .muted {
+  font-size:var(--fs-14);
 }
 
 .option {
   display:flex;
-  gap:8px;
-  margin:10px 12px;
-  color:#cbd5e1;
-  font-weight:700;
+  gap:var(--s-8);
+  margin:var(--s-12);
+  color:var(--text-2);
+  font-weight:var(--fw-600);
+  font-size:var(--fs-14);
 }
 
 .option input {
-  width:17px;
-  accent-color:var(--cyan);
+  width:18px;
+  accent-color:var(--accent);
 }
+
+.option.refreshOption {
+  margin:0 0 var(--s-8);
+}
+
+/* ---------- Game screen ---------- */
 
 .gamegrid {
   display:grid;
   grid-template-columns:minmax(0,1fr) 230px;
-  gap:12px;
+  gap:var(--s-12);
+}
+
+/* The play column is exactly one viewport tall: header and timer keep their size,
+   the play card takes the rest, so nothing needed during a run is below the fold. */
+.gamegrid main {
+  height:calc(100vh - 2 * var(--pad));
+  height:calc(100dvh - 2 * var(--pad));
+  min-height:420px;
+  display:flex;
+  flex-direction:column;
 }
 
 .head {
   display:flex;
   justify-content:space-between;
   align-items:end;
-  gap:15px;
-  margin-bottom:12px;
+  gap:var(--s-16);
+  margin-bottom:var(--s-12);
+  flex:none;
+}
+
+.head > div:first-child {
+  min-width:0;
 }
 
 .head h1 {
-  margin:5px 0 0;
-  font-size:clamp(1.8rem,4vw,3.3rem);
+  margin:var(--s-4) 0 0;
+  font-size:var(--fs-question);
+  line-height:1.1;
+  overflow-wrap:anywhere;
+}
+
+/* Chip: the mode / difficulty tag above the question */
+.head .kicker {
+  display:inline-block;
+  padding:var(--s-4) var(--s-12);
+  border-radius:var(--r-pill);
+  background:var(--hot);
+  color:var(--on-accent);
+  font-size:var(--fs-12);
+  letter-spacing:.1em;
 }
 
 .questionActions {
   display:flex;
   align-items:center;
-  gap:12px;
+  gap:var(--s-12);
   flex-wrap:wrap;
-  margin-top:12px;
+  margin-top:var(--s-12);
 }
 
 .selectionProgress {
   min-width:120px;
-  color:#cbd5e1;
-  font-weight:800;
+  color:var(--text-2);
+  font-weight:var(--fw-700);
+  font-size:var(--fs-14);
 }
 
-.confirmSelection {
-  border:1px solid #22d3ee55;
-  border-radius:13px;
-  padding:11px 18px;
-  background:#22d3ee1c;
-  color:#67e8f9;
-  font-weight:950;
-  cursor:pointer;
-  transition:.16s;
-}
-
-.confirmSelection:not(:disabled) {
-  background:#22d3ee;
-  color:#06202a;
-  box-shadow:0 0 22px #22d3ee66;
-  transform:translateY(-1px);
-}
-
-.confirmSelection:disabled {
-  opacity:.38;
-  cursor:not-allowed;
-}
-
-.timerTrack.penalty {
-  animation:timerPenalty .48s ease;
-  background:#5f0714;
-}
-
-.penaltyBurst {
-  color:#991b1b!important;
-  text-shadow:0 0 14px #ef4444,0 4px 10px #000!important;
-}
-
-.selectionFull {
-  color:#c084fc!important;
-}
-
+/* Stat */
 .stats {
   display:flex;
-  gap:8px;
+  gap:var(--s-8);
 }
 
 .stat {
   min-width:88px;
-  padding:10px 12px;
-  border:1px solid #ffffff18;
-  background:#ffffff0b;
-  border-radius:16px;
+  padding:var(--s-8) var(--s-12);
+  background:var(--surface-1);
+  border-radius:var(--r-14);
 }
 
 .stat small {
   display:block;
-  color:var(--muted);
+  color:var(--text-2);
+  font-size:var(--fs-12);
+  font-weight:var(--fw-700);
+  text-transform:uppercase;
+  letter-spacing:.08em;
 }
 
 .stat b {
-  font-size:1.5rem;
-  color:#57f287;
+  font-size:var(--fs-28);
+  color:var(--good);
 }
 
+/* Timer */
 .timerTrack {
-  height:11px;
-  background:#ffffff12;
-  border-radius:12px;
+  height:12px;
+  background:var(--surface-1);
+  border-radius:var(--r-pill);
   overflow:hidden;
-  margin-bottom:10px;
+  margin-bottom:var(--s-12);
+  flex:none;
 }
 
 .timerBar {
   height:100%;
+  border-radius:var(--r-pill);
   transform-origin:left;
 }
 
+.timerTrack.penalty {
+  animation:timerPenalty .48s ease;
+  background:var(--bad);
+}
+
+/* Play card */
 .play {
   position:relative;
-  padding:6px;
-  min-height:900px;
+  padding:var(--s-8);
+  flex:1;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  gap:var(--s-12);
 }
 
 .flagbox {
-  height:620px;
-  display:grid;
-  place-items:center;
+  flex:1;
+  min-height:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:var(--s-8);
 }
 
+/* The frame hugs the flag (no letterbox), so white hoists stay distinct from it. */
 .flagbox img {
-  width:min(650px,100%);
-  height:360px;
+  max-width:min(720px,100%);
+  max-height:100%;
   object-fit:contain;
-  background:#fff;
-  padding:12px;
-  border-radius:18px;
+  background:var(--flag-frame);
+  padding:var(--s-12);
+  border-radius:var(--r-14);
+  box-shadow:0 6px 0 var(--edge);
   transition:opacity .18s;
 }
 
@@ -284,98 +465,146 @@ button,input {
   filter:saturate(.35);
 }
 
+/* Answer tile */
 .answers {
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:12px;
+  gap:var(--s-12);
+  flex:none;
+}
+
+.answers:empty {
+  display:none;
 }
 
 .answer {
-  min-height:65px;
-  padding:15px;
+  min-height:64px;
+  padding:var(--s-12) var(--s-16);
   text-align:left;
-  font-weight:800;
+  border:0;
+  border-radius:var(--r-14);
+  background:var(--surface-2);
+  color:var(--text);
+  box-shadow:0 4px 0 var(--edge);
+  font-family:var(--font-display);
+  font-size:var(--fs-18);
+  font-weight:var(--fw-600);
+  overflow-wrap:anywhere;
+  cursor:pointer;
+  transition:transform var(--press),box-shadow var(--press);
 }
 
+.answer:hover {
+  box-shadow:0 4px 0 var(--edge),inset 0 0 0 2px var(--accent);
+}
+
+.answer:active {
+  transform:translateY(2px);
+  box-shadow:0 2px 0 var(--edge);
+}
+
+.answer.is-correct {
+  background:var(--good);
+  color:var(--on-accent);
+}
+
+.answer.is-wrong {
+  background:var(--bad);
+  color:var(--on-accent);
+}
+
+/* Map */
 .mapWrap {
   position:relative;
   width:100%;
-  height:clamp(790px,82vh,940px);
+  flex:1;
+  min-height:0;
 }
 
 .map {
   position:absolute;
   inset:0;
-  background:#071a32;
-  border-radius:18px;
+  background:var(--map-sea);
+  border-radius:var(--r-14);
   overflow:hidden;
 }
 
 .mapControls {
   position:absolute;
-  left:16px;
-  top:16px;
+  left:var(--s-16);
+  top:var(--s-16);
   z-index:8;
   display:grid;
-  gap:7px;
+  gap:var(--s-8);
   pointer-events:auto;
 }
 
 .mapControl {
-  width:43px;
-  height:43px;
-  border:1px solid #ffffff35;
-  border-radius:12px;
-  background:#061324e6;
-  color:#e6fbff;
-  font-size:1.35rem;
-  font-weight:900;
+  width:44px;
+  height:44px;
+  border:0;
+  border-radius:var(--r-14);
+  background:var(--surface-2);
+  color:var(--text);
+  box-shadow:0 4px 0 var(--edge);
+  font-family:var(--font-display);
+  font-size:var(--fs-28);
+  font-weight:var(--fw-700);
+  line-height:1;
   cursor:pointer;
-  box-shadow:0 8px 24px #0007;
-  backdrop-filter:blur(10px);
-  transition:.15s;
+  transition:transform var(--press),box-shadow var(--press);
 }
 
 .mapControl:hover {
-  border-color:var(--cyan);
-  color:var(--cyan);
-  transform:translateY(-1px);
+  color:var(--accent);
 }
 
 .mapControl:active {
-  transform:scale(.94);
+  transform:translateY(2px);
+  box-shadow:0 2px 0 var(--edge);
 }
 
 .mapControl.reset {
-  font-size:1rem;
+  font-size:var(--fs-18);
+}
+
+/* Mute toggle: a map-control button in the menu corner and beside the game stats */
+.muteBtn {
+  flex:none;
+  align-self:center;
+  font-size:var(--fs-18);
+}
+
+.menuMute {
+  position:absolute;
+  top:var(--s-16);
+  right:var(--s-16);
 }
 
 .mapHint {
   position:absolute;
   z-index:7;
   left:50%;
-  bottom:12px;
+  bottom:var(--s-12);
   transform:translateX(-50%);
-  padding:7px 12px;
-  border-radius:10px;
-  background:#061324c7;
-  color:#cbd5e1;
-  font-size:.78rem;
+  padding:var(--s-4) var(--s-12);
+  border-radius:var(--r-pill);
+  background:var(--scrim);
+  color:var(--text-2);
+  font-size:var(--fs-12);
   pointer-events:none;
-  opacity:.82;
   white-space:nowrap;
 }
 
 .hoverFlag {
   position:absolute;
-  right:16px;
-  top:16px;
+  right:var(--s-16);
+  top:var(--s-16);
   z-index:5;
   width:155px;
-  padding:9px;
-  border:1px solid #ffffff45;
-  border-radius:15px;
-  background:#061324dd;
+  padding:var(--s-8);
+  border-radius:var(--r-14);
+  background:var(--surface-1);
   pointer-events:none;
   opacity:0;
   transition:.18s;
@@ -389,64 +618,97 @@ button,input {
   width:100%;
   height:85px;
   object-fit:contain;
-  background:#fff;
-  border-radius:9px;
+  background:var(--flag-frame);
+  border-radius:var(--r-8);
 }
 
 .hoverFlag span {
   display:block;
   text-align:center;
-  font-weight:800;
+  font-weight:var(--fw-700);
 }
 
+/* Reactions and reveal */
 .reaction,.revealNotice {
   position:absolute;
   z-index:15;
   left:50%;
   pointer-events:none;
-  font-weight:1000;
+  font-family:var(--font-display);
+  font-weight:var(--fw-700);
   text-align:center;
-  text-shadow:0 5px 25px currentColor;
 }
 
 .reaction {
   top:20%;
-  font-size:clamp(2rem,6vw,4.5rem);
+  font-size:var(--fs-reaction);
   opacity:0;
+  -webkit-text-stroke:2px var(--edge);
+  paint-order:stroke fill;
 }
 
 .reaction.show {
   animation:pop 1s ease;
 }
 
-.answerArrowText {
-  font-weight:1000;
-  filter:drop-shadow(0 0 3px #fff) drop-shadow(0 0 12px #ff1744) drop-shadow(0 7px 12px #000);
+.revealNotice {
+  top:var(--s-16);
+  transform:translateX(-50%);
+  padding:var(--s-12) var(--s-16);
+  border-radius:var(--r-14);
+  background:var(--surface-1);
+  color:var(--good);
+  font-size:var(--fs-18);
+}
+
+/* Dashed ring drawn around a revealed country (map.js RevealCircles). */
+.revealLayer {
+  position:absolute;
+  inset:0;
+  z-index:6;
+  width:100%;
+  height:100%;
+  border-radius:var(--r-14);
   pointer-events:none;
 }
 
-.revealNotice {
-  top:18px;
-  transform:translateX(-50%);
-  padding:11px 18px;
-  border-radius:14px;
-  background:#020617d9;
-  color:#fde68a;
-  border:1px solid #fde68a66;
+.revealCircle {
+  fill:none;
+  stroke:var(--text);
+  stroke-width:4;
+  stroke-dasharray:14 10;
+  stroke-linecap:round;
+  filter:drop-shadow(0 0 3px var(--edge));
 }
 
+/* Mask stroke that grows around the ring: white shows the ring, so it looks drawn on. */
+.revealCircleMask {
+  fill:none;
+  stroke:var(--text);
+  stroke-width:16;
+}
+
+/* Leaderboard */
 .side {
-  padding:14px;
+  padding:var(--s-16);
   height:max-content;
+  max-height:calc(100dvh - 2 * var(--pad));
+  overflow-y:auto;
+}
+
+.side h2 {
+  margin:0 0 var(--s-8);
+  font-size:var(--fs-18);
 }
 
 .row {
   display:flex;
-  gap:7px;
-  padding:9px;
-  background:#ffffff09;
-  border-radius:11px;
-  margin-top:7px;
+  gap:var(--s-8);
+  padding:var(--s-8) var(--s-12);
+  background:var(--surface-2);
+  border-radius:var(--r-8);
+  margin-top:var(--s-8);
+  font-size:var(--fs-14);
 }
 
 .player {
@@ -454,79 +716,64 @@ button,input {
 }
 
 .rank {
-  color:#fbbf24;
+  color:var(--accent);
 }
 
 .pts {
-  color:var(--cyan);
+  color:var(--good);
+}
+
+/* ---------- Overlays: run-over modal and Study Mode card ---------- */
+
+.modal,.studyCard {
+  position:fixed;
+  inset:0;
+  display:grid;
+  place-items:center;
+  padding:var(--s-16);
+  background:var(--scrim);
 }
 
 .modal {
-  position:fixed;
-  inset:0;
-  background:#020617e8;
-  display:grid;
-  place-items:center;
-  padding:15px;
   z-index:30;
+}
+
+.studyCard {
+  z-index:45;
 }
 
 .modalin {
   width:min(430px,100%);
-  background:#10233c;
-  border:1px solid #ffffff18;
-  border-radius:26px;
-  padding:27px;
+  padding:var(--s-32) var(--s-24);
+}
+
+.modalin .kicker {
+  color:var(--bad);
 }
 
 .save {
   display:flex;
-  gap:8px;
+  gap:var(--s-8);
 }
 
 .save input {
   flex:1;
   min-width:0;
-  padding:13px;
-  border-radius:11px;
-  background:#ffffff0b;
-  color:#fff;
-  border:1px solid #ffffff22;
-}
-
-.btn {
-  padding:13px;
-  border:0;
-  border-radius:11px;
-  font-weight:900;
-}
-
-.primary {
-  background:var(--cyan);
+  padding:var(--s-12);
+  border-radius:var(--r-14);
+  background:var(--bg);
+  color:var(--text);
+  border:2px solid var(--surface-2);
 }
 
 .again {
   width:100%;
-  margin-top:10px;
-}
-
-.studyCard {
-  position:fixed;
-  inset:0;
-  z-index:45;
-  display:grid;
-  place-items:center;
-  padding:18px;
-  background:#020617e8;
+  margin-top:var(--s-12);
 }
 
 .studyInner {
   width:min(620px,100%);
-  border:1px solid #22d3ee55;
-  border-radius:24px;
-  background:linear-gradient(145deg,#102b47,#0b1d34);
-  box-shadow:0 24px 80px #000c,0 0 34px #22d3ee22;
-  padding:24px;
+  padding:var(--s-24);
 }
 
 .studyFlag {
@@ -534,45 +781,32 @@ button,input {
   width:min(330px,80%);
   height:175px;
   object-fit:contain;
-  margin:0 auto 18px;
-  padding:8px;
-  border-radius:14px;
-  background:#fff;
+  margin:0 auto var(--s-16);
+  padding:var(--s-8);
+  border-radius:var(--r-14);
+  background:var(--flag-frame);
 }
 
 .studyInner h2 {
-  margin:0 0 10px;
-  font-size:1.8rem;
+  margin:0 0 var(--s-8);
+  font-size:var(--fs-28);
 }
 
 .studyInner p {
-  color:#dbeafe;
+  color:var(--text-2);
   line-height:1.55;
-  margin:0 0 20px;
+  margin:0 0 var(--s-24);
 }
 
 .studyInner p.loading {
-  color:#94a3b8;
   font-style:italic;
 }
 
 .studyActions {
   display:flex;
-  gap:10px;
+  gap:var(--s-12);
   justify-content:flex-end;
   flex-wrap:wrap;
-}
-
-.studyLink {
-  text-decoration:none;
-  background:#ffffff12;
-  color:#67e8f9;
-  border:1px solid #22d3ee55;
-}
-
-.studyContinue {
-  background:var(--cyan);
-  color:#06202a;
 }
 
 @keyframes timerPenalty {
@@ -614,34 +848,7 @@ button,input {
   }
   .side {
     order:2;
-  }
-  .mapWrap {
-    height:clamp(700px,78vh,840px);
-  }
-}
-
-@media(max-width:760px) {
-  .mapWrap {
-    height:650px;
-  }
-  .play {
-    min-height:680px;
-  }
-}
-
-@media(max-width:620px) {
-  .difficulty,.answers {
-    grid-template-columns:1fr 1fr;
-  }
-  .mapWrap {
-    height:590px;
-  }
-  .wrap {
-    padding:8px;
-  }
-  .play {
-    padding:4px;
-    min-height:610px;
+    max-height:none;
   }
 }
 
@@ -651,23 +858,57 @@ button,input {
   }
 }
 
-@media(max-width:760px) {
-  .flagbox {
-    height:auto;
-    min-height:300px;
+@media(max-width:620px) {
+  :root {
+    --pad:var(--s-8);
   }
-  .flagbox img {
-    height:auto;
-    max-height:240px;
+  .difficulty,.answers {
+    grid-template-columns:1fr 1fr;
   }
   .play {
-    min-height:0;
+    padding:var(--s-4);
+  }
+  .answer {
+    min-height:52px;
+    padding:var(--s-12);
+  }
+  /* Stats move up beside the back button so the question gets the full width. */
+  .head {
+    position:relative;
+  }
+  .stats {
+    position:absolute;
+    top:0;
+    right:0;
+  }
+  .stat {
+    min-width:0;
+    padding:var(--s-4) var(--s-12);
+    border-radius:var(--r-8);
+    display:flex;
+    align-items:baseline;
+    gap:var(--s-8);
+  }
+  .stat b {
+    font-size:var(--fs-18);
+  }
+  /* Same height as the back button, so the stats row does not grow into the mode chip below it. */
+  .muteBtn {
+    width:28px;
+    height:28px;
+    border-radius:var(--r-8);
+    font-size:var(--fs-14);
+  }
+  /* Own line under the back button, so it never slides under the stats in the top-right corner. */
+  .head .kicker {
+    display:table;
+    font-size:var(--fs-12);
   }
 }
 
-button:focus-visible,.difficulty input:focus-visible+label {
-  outline:2px solid var(--cyan);
-  outline-offset:2px;
+button:focus-visible,a:focus-visible,input:focus-visible,.difficulty input:focus-visible+label {
+  outline:3px solid var(--accent);
+  outline-offset:3px;
 }
 
 @media(prefers-reduced-motion:reduce) {
@@ -677,18 +918,13 @@ button:focus-visible,.difficulty input:focus-visible+label {
   }
 }
 
-.option.refreshOption {
-  margin: 0 0 6px;
-  font-size: .9rem;
-}
-
 </style>
 </head>
 <body><div class="wrap">
-<section id="menu" class="menu"><div class="menuin"><div class="kicker">ENDLESS GEOGRAPHY</div><h1>Choose your challenge.</h1><p id="countryDataStatus" class="muted">Country database: loading expanded coverage…</p><label class="option refreshOption" title="Updates country populations from the World Bank when online. The game works fully without it. Turning it off applies after a reload."><input id="liveRefresh" type="checkbox" checked> Refresh populations online (optional)</label><section class="settings"><h2>Difficulty</h2><div class="difficulty"><input name="difficulty" id="easy" value="easy" type="radio"><label for="easy">Easy<small>20 seconds</small></label><input name="difficulty" id="normal" value="normal" type="radio" checked><label for="normal">Normal<small>10 seconds</small></label><input name="difficulty" id="hard" value="hard" type="radio"><label for="hard">Hard<small>5 seconds</small></label><input name="difficulty" id="extreme" value="extreme" type="radio"><label for="extreme">Extreme<small>3 seconds</small></label></div></section><section class="settings"><h2>Expertise</h2><div class="difficulty expertise"><input name="expertise" id="novice" value="novice" type="radio"><label for="novice">Novice<small>Top 70 countries</small></label><input name="expertise" id="intermediate" value="intermediate" type="radio" checked><label for="intermediate">Intermediate<small>Top 120 countries</small></label><input name="expertise" id="pro" value="pro" type="radio"><label for="pro">Pro<small>Top 180 countries</small></label><input name="expertise" id="expert" value="expert" type="radio"><label for="expert">Expert<small>All countries</small></label></div></section><div class="modes"><div><button class="mode" data-mode="flag">🚩<b>Flag Mode</b><span class="muted">Identify flags.</span></button><label class="option"><input id="studyMode" type="checkbox"> Study Mode</label></div><div><button class="mode" data-mode="map">🗺️<b>Map Mode</b><span class="muted">Find countries.</span></button><label class="option"><input id="showNames" type="checkbox" checked> Show names on hover</label><label class="option"><input id="showFlags" type="checkbox"> Show hovered flag</label></div><button class="mode" data-mode="trivia">🧠<b>Country Trivia</b><span class="muted">Answer on the map.</span></button></div></div></section>
-<section id="game" class="hidden"><div class="gamegrid"><main><header class="head"><div><button id="backBtn" type="button">← Change mode</button><div class="kicker" id="modeLabel"></div><h1 id="question" aria-live="polite"></h1><div id="questionActions" class="questionActions hidden"><span id="selectionProgress" class="selectionProgress">Selected: 0 / 1</span><button id="confirmSelection" class="confirmSelection" type="button" disabled>Confirm Selection</button></div></div><div class="stats"><div class="stat"><small>Score</small><b id="score">0</b></div><div class="stat"><small>Time</small><b id="time">10s</b></div></div></header><div class="timerTrack"><div id="timerBar" class="timerBar"></div></div><section class="card play"><div id="reaction" class="reaction" role="status"></div><div id="revealNotice" class="revealNotice hidden"></div><div id="flagArea" class="flagbox"><img id="flag"></div><div id="mapWrap" class="mapWrap hidden"><div id="mapArea" class="map"></div><div class="mapControls" aria-label="Map controls"><button class="mapControl" type="button" title="Zoom in" id="zoomInBtn">+</button><button class="mapControl" type="button" title="Zoom out" id="zoomOutBtn">−</button><button class="mapControl reset" type="button" title="Reset map" id="zoomResetBtn">⌂</button></div><div class="mapHint">Drag to pan · Scroll or pinch to zoom</div><div id="hoverFlag" class="hoverFlag"><img id="hoverFlagImg"><span id="hoverFlagName"></span></div></div><div id="answers" class="answers"></div></section></main><aside class="card side"><h2 id="boardTitle">🏆 Top 10</h2><div id="board"></div></aside></div></section></div>
-<div id="studyCard" class="studyCard hidden"><div class="studyInner"><div class="kicker">STUDY MODE</div><img id="studyFlag" class="studyFlag" alt="Correct flag"><h2 id="studyTitle"></h2><p id="studySummary"></p><div class="studyActions"><a id="studyReadMore" class="btn studyLink" target="_blank" rel="noopener noreferrer">Read more</a><button id="studyContinue" class="btn studyContinue" type="button">Continue</button></div></div></div>
-<div id="modal" class="modal hidden"><div class="modalin"><div class="kicker" style="color:#fb7185">RUN OVER</div><h2>Final score: <span id="final"></span></h2><p>Correct answer: <b id="correct"></b></p><p id="reason"></p><div class="save"><input id="name" maxlength="20" placeholder="Player name"><button id="saveBtn" class="btn primary">Save</button></div><button id="againBtn" class="btn again" type="button">Play again</button></div></div>
+<section id="menu" class="menu"><button class="mapControl muteBtn menuMute" type="button" aria-label="Mute sounds" aria-pressed="false">🔊</button><div class="menuin"><div class="kicker">ENDLESS GEOGRAPHY</div><h1>Choose your challenge.</h1><p id="countryDataStatus" class="muted">Country database: loading expanded coverage…</p><label class="option refreshOption" title="Updates country populations from the World Bank when online. The game works fully without it. Turning it off applies after a reload."><input id="liveRefresh" type="checkbox" checked> Refresh populations online (optional)</label><section class="settings"><h2>Difficulty</h2><div class="difficulty"><input name="difficulty" id="easy" value="easy" type="radio"><label for="easy">Easy<small>20 seconds</small></label><input name="difficulty" id="normal" value="normal" type="radio" checked><label for="normal">Normal<small>10 seconds</small></label><input name="difficulty" id="hard" value="hard" type="radio"><label for="hard">Hard<small>5 seconds</small></label><input name="difficulty" id="extreme" value="extreme" type="radio"><label for="extreme">Extreme<small>3 seconds</small></label></div></section><section class="settings"><h2>Expertise</h2><div class="difficulty expertise"><input name="expertise" id="novice" value="novice" type="radio"><label for="novice">Novice<small>Top 70 countries</small></label><input name="expertise" id="intermediate" value="intermediate" type="radio" checked><label for="intermediate">Intermediate<small>Top 120 countries</small></label><input name="expertise" id="pro" value="pro" type="radio"><label for="pro">Pro<small>Top 180 countries</small></label><input name="expertise" id="expert" value="expert" type="radio"><label for="expert">Expert<small>All countries</small></label></div></section><div class="modes"><div><button class="mode" data-mode="flag">🚩<b>Flag Mode</b><span class="muted">Identify flags.</span></button><label class="option"><input id="studyMode" type="checkbox"> Study Mode</label></div><div><button class="mode" data-mode="map">🗺️<b>Map Mode</b><span class="muted">Find countries.</span></button><label class="option"><input id="showNames" type="checkbox" checked> Show names on hover</label><label class="option"><input id="showFlags" type="checkbox"> Show hovered flag</label></div><button class="mode" data-mode="trivia">🧠<b>Country Trivia</b><span class="muted">Answer on the map.</span></button></div></div></section>
+<section id="game" class="hidden"><div class="gamegrid"><main><header class="head"><div><button id="backBtn" class="btn btn-ghost" type="button">← Change mode</button><div class="kicker" id="modeLabel"></div><h1 id="question" aria-live="polite"></h1><div id="questionActions" class="questionActions hidden"><span id="selectionProgress" class="selectionProgress">Selected: 0 / 1</span><button id="confirmSelection" class="btn btn-primary" type="button" disabled>Confirm Selection</button></div></div><div class="stats"><button class="mapControl muteBtn" type="button" aria-label="Mute sounds" aria-pressed="false">🔊</button><div class="stat"><small>Score</small><b id="score">0</b></div><div class="stat"><small>Time</small><b id="time">10s</b></div></div></header><div class="timerTrack"><div id="timerBar" class="timerBar"></div></div><section class="card play"><div id="reaction" class="reaction" role="status"></div><div id="revealNotice" class="revealNotice hidden"></div><div id="flagArea" class="flagbox"><img id="flag"></div><div id="mapWrap" class="mapWrap hidden"><div id="mapArea" class="map"></div><svg id="revealLayer" class="revealLayer" aria-hidden="true"></svg><div class="mapControls" aria-label="Map controls"><button class="mapControl" type="button" title="Zoom in" id="zoomInBtn">+</button><button class="mapControl" type="button" title="Zoom out" id="zoomOutBtn">−</button><button class="mapControl reset" type="button" title="Reset map" id="zoomResetBtn">⌂</button></div><div class="mapHint">Drag to pan · Scroll or pinch to zoom</div><div id="hoverFlag" class="hoverFlag"><img id="hoverFlagImg"><span id="hoverFlagName"></span></div></div><div id="answers" class="answers"></div></section></main><aside class="card side"><h2 id="boardTitle">🏆 Top 10</h2><div id="board"></div></aside></div></section></div>
+<div id="studyCard" class="studyCard hidden"><div class="studyInner"><div class="kicker">STUDY MODE</div><img id="studyFlag" class="studyFlag" alt="Correct flag"><h2 id="studyTitle"></h2><p id="studySummary"></p><div class="studyActions"><a id="studyReadMore" class="btn btn-ghost" target="_blank" rel="noopener noreferrer">Read more</a><button id="studyContinue" class="btn btn-primary" type="button">Continue</button></div></div></div>
+<div id="modal" class="modal hidden"><div class="modalin"><div class="kicker">RUN OVER</div><h2>Final score: <span id="final"></span></h2><p>Correct answer: <b id="correct"></b></p><p id="reason"></p><div class="save"><input id="name" maxlength="20" placeholder="Player name"><button id="saveBtn" class="btn btn-secondary">Save</button></div><button id="againBtn" class="btn btn-primary again" type="button">Play again</button></div></div>
 <script>
 /* Shared helpers.
    Every file in js/ is a classic <script>, so they all share one global scope and
@@ -715,8 +951,18 @@ const LS = {
   removeItem(k) { try { localStorage.removeItem(k); } catch { /* ignore */ } }
 };
 
+// Design tokens live in css/style.css (:root). JS reads them instead of hardcoding colours.
+const token = name => getComputedStyle(document.documentElement).getPropertyValue(`--${name}`).trim();
+
+// amCharts wants colours as numbers (0xrrggbb).
+function tokenHex(name) {
+  const v = token(name);
+  if (!/^#[0-9a-fA-F]{6}$/.test(v)) throw new Error(`Unknown colour token --${name}`);
+  return parseInt(v.slice(1), 16);
+}
+
 // The big floating reaction text ("Nice!", "Wrong! -3 seconds", ...).
-function showReaction(text, color = '#991b1b', extra = 'penaltyBurst') {
+function showReaction(text, color = token('bad'), extra = 'penaltyBurst') {
   const e = $('reaction');
   e.textContent = text;
   e.style.color = color;
@@ -724,6 +970,175 @@ function showReaction(text, color = '#991b1b', extra = 'penaltyBurst') {
   void e.offsetWidth; // restart the CSS animation
   e.className = `reaction show ${extra}`;
 }
+
+</script>
+<script>
+/* Sound effects, made in code with the Web Audio API: no audio files, works from file:// and offline.
+   The only file that touches audio. Every call is safe: with no Web Audio, before the first user
+   gesture (browsers block audio until then), or while muted, Sound simply does nothing. */
+
+const SOUND_MUTE_KEY = 'geogryphon.muted';
+const HOVER_GAP_MS = 40;
+
+const clamp01 = x => Math.min(1, Math.max(0, Number(x) || 0));
+const lerp = (a, b, t) => a + (b - a) * t;
+
+/* Each recipe turns an intensity (0..1) into notes:
+   f = start pitch (Hz), f2 = end pitch for a glide, t = start offset (s), d = length (s),
+   type = oscillator wave, v = peak volume (0..1), noise = a short noise burst instead of a tone. */
+const SOUND_RECIPES = {
+  hover: () => [{ f: 1760, t: 0, d: 0.03, type: 'sine', v: 0.04 }],
+  click: () => [{ f: 440, f2: 220, t: 0, d: 0.07, type: 'triangle', v: 0.25 }],
+  // Rising arpeggio: more notes, higher, brighter and louder the more time was left.
+  correct: i => {
+    const lift = lerp(1, 1.26, i);
+    const step = lerp(0.09, 0.055, i);
+    const type = i > 0.5 ? 'square' : 'triangle';
+    const v = lerp(0.18, 0.3, i);
+    const notes = [523.25, 659.25, 783.99, 1046.5].slice(0, Math.round(lerp(2, 4, i)))
+      .map((f, k) => ({ f: f * lift, t: k * step, d: 0.12, type, v }));
+    if (i >= 0.6) notes.push({ f: 2093 * lift, f2: 2637 * lift, t: notes.length * step, d: 0.3, type: 'sine', v: v / 2 });
+    return notes;
+  },
+  // Falling "bonk": longer, lower, harsher and louder the more time was used.
+  wrong: i => {
+    const type = i > 0.5 ? 'sawtooth' : 'square';
+    const v = lerp(0.16, 0.28, i);
+    return [
+      { f: lerp(330, 247, i), t: 0, d: 0.08, type, v },
+      { f: lerp(262, 196, i), f2: lerp(220, 82, i), t: 0.09, d: lerp(0.12, 0.45, i), type, v }
+    ];
+  },
+  tick: i => [{ f: lerp(900, 1200, i), t: 0, d: 0.035, type: 'square', v: lerp(0.07, 0.14, i) }],
+  tickFinal: () => [
+    { f: 1200, t: 0, d: 0.035, type: 'square', v: 0.15 },
+    { f: 1500, t: 0.5, d: 0.035, type: 'square', v: 0.15 }
+  ],
+  timesUp: () => [
+    { f: 220, t: 0, d: 0.25, type: 'square', v: 0.25 },
+    { f: 165, t: 0.3, d: 0.35, type: 'square', v: 0.25 }
+  ],
+  runOver: () => [392, 329.63, 261.63, 196]
+    .map((f, k) => ({ f, t: k * 0.15, d: k === 3 ? 0.45 : 0.13, type: 'triangle', v: 0.22 })),
+  pick: () => [{ f: 660, f2: 990, t: 0, d: 0.07, type: 'sine', v: 0.18 }],
+  unpick: () => [{ f: 990, f2: 660, t: 0, d: 0.07, type: 'sine', v: 0.14 }],
+  full: () => [
+    { f: 140, f2: 80, t: 0, d: 0.14, type: 'sine', v: 0.3 },
+    { noise: true, t: 0, d: 0.05, v: 0.1 }
+  ],
+  saved: () => [
+    { f: 783.99, t: 0, d: 0.1, type: 'triangle', v: 0.2 },
+    { f: 1174.66, t: 0.1, d: 0.25, type: 'triangle', v: 0.2 }
+  ]
+};
+
+const Sound = (() => {
+  let ctx = null, master = null, noise = null, broken = false;
+  let muted = LS.getItem(SOUND_MUTE_KEY) === '1';
+  let lastHover = -Infinity, lastTick = null, wrongVoices = [], tickVoices = [];
+
+  // Runs on every user gesture: creates the audio context on the first one and wakes it again if the
+  // browser suspended (or, on iOS, interrupted) it.
+  function unlock() {
+    if (broken) return;
+    try {
+      if (!ctx) {
+        const Ctx = globalThis.AudioContext || globalThis.webkitAudioContext;
+        if (!Ctx) { broken = true; return; }
+        ctx = new Ctx();
+        master = ctx.createGain();
+        master.gain.value = 0.6;
+        master.connect(ctx.destination);
+      }
+      if (ctx.state !== 'running') ctx.resume().catch(() => {});
+    } catch {
+      broken = true;
+      ctx = null;
+    }
+  }
+
+  function noiseBuffer() {
+    if (!noise) {
+      noise = ctx.createBuffer(1, Math.round(ctx.sampleRate * 0.2), ctx.sampleRate);
+      const d = noise.getChannelData(0);
+      for (let k = 0; k < d.length; k++) d[k] = Math.random() * 2 - 1;
+    }
+    return noise;
+  }
+
+  // One note: a tone or noise burst through a quick attack and an exponential release (no clicks).
+  function voice(n, at) {
+    const start = at + n.t, end = start + n.d;
+    const env = ctx.createGain();
+    env.gain.setValueAtTime(0.0001, start);
+    env.gain.exponentialRampToValueAtTime(n.v, start + 0.005);
+    env.gain.exponentialRampToValueAtTime(0.0001, end);
+    env.connect(master);
+    let src;
+    if (n.noise) {
+      src = ctx.createBufferSource();
+      src.buffer = noiseBuffer();
+    } else {
+      src = ctx.createOscillator();
+      src.type = n.type;
+      src.frequency.setValueAtTime(n.f, start);
+      if (n.f2) src.frequency.exponentialRampToValueAtTime(n.f2, end);
+    }
+    src.connect(env);
+    src.start(start);
+    src.stop(end + 0.02);
+    return src;
+  }
+
+  const silence = voices => voices.forEach(v => { try { v.stop(); } catch { /* already stopped */ } });
+
+  // delay (s) starts the sound later, so one sound can follow another.
+  function play(name, intensity = 0, delay = 0) {
+    // A context that is not running yet (e.g. a phone's first touch) would only queue a burst for later.
+    if (muted || broken || !ctx || ctx.state !== 'running' || !SOUND_RECIPES[name]) return false;
+    if (name === 'hover') {
+      const now = performance.now();
+      if (now - lastHover < HOVER_GAP_MS) return false;
+      lastHover = now;
+    }
+    try {
+      if (name === 'wrong') silence(wrongVoices); // repeated misses never stack
+      const at = ctx.currentTime + 0.01 + Math.max(0, Number(delay) || 0);
+      const voices = SOUND_RECIPES[name](clamp01(intensity)).map(n => voice(n, at));
+      if (name === 'wrong') wrongVoices = voices;
+      if (name === 'tick' || name === 'tickFinal') tickVoices = voices;
+      return true;
+    } catch {
+      broken = true;
+      return false;
+    }
+  }
+
+  // The countdown calls this every frame while the timer is red; only a new whole second plays.
+  function tick(secondsLeft) {
+    if (secondsLeft === lastTick) return false;
+    lastTick = secondsLeft;
+    return secondsLeft <= 1 ? play('tickFinal') : play('tick', 1 - (secondsLeft - 1) / 5);
+  }
+
+  return {
+    unlock,
+    play,
+    tick,
+    // Re-arms the ticks and cuts a final-second tock that is still waiting to play.
+    resetTick() {
+      lastTick = null;
+      silence(tickVoices);
+      tickVoices = [];
+    },
+    isMuted: () => muted,
+    setMuted(on) {
+      muted = !!on;
+      LS.setItem(SOUND_MUTE_KEY, muted ? '1' : '0');
+      if (muted) silence(wrongVoices);
+    }
+  };
+})();
 
 </script>
 <script>
@@ -1380,15 +1795,124 @@ function nextTriviaQuestion(){
    swapped or stubbed without touching game rules. */
 
 // The free amCharts licence shows a small amCharts logo in the corner of the map.
-// Removing it requires a paid amCharts licence. Set this to true to keep the logo.
-const KEEP_AMCHARTS_LOGO = false;
+// Removing it requires a paid amCharts licence, so the logo stays on.
+const KEEP_AMCHARTS_LOGO = true;
+
+/* ---------- reveal circles: a dashed ring drawn around each revealed country ----------
+   Lives in an SVG layer over the map (#revealLayer) and knows nothing about amCharts: MapView passes a
+   projector per country that returns the country's outline in layer pixels for the current pan/zoom. */
+const CIRCLE_MIN_R = 24;          // tiny countries still get a visible ring
+const CIRCLE_PAD = 12;            // breathing room between the outline and the ring
+const CIRCLE_DRAW_MS = 700;       // time for the ring to draw itself once around
+const CIRCLE_MARCH_PX_PER_MS = 0.03;
+const MAX_REVEAL_CIRCLES = 5;
+
+// Circle around projected points: centred on their bounding box, radius half its diagonal plus padding.
+function circleAround(points, { minR = CIRCLE_MIN_R, maxR = Infinity, pad = CIRCLE_PAD } = {}) {
+  if (!points || !points.length) return null;
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const p of points) {
+    if (p.x < minX) minX = p.x;
+    if (p.x > maxX) maxX = p.x;
+    if (p.y < minY) minY = p.y;
+    if (p.y > maxY) maxY = p.y;
+  }
+  const r = Math.min(maxR, Math.max(minR, Math.hypot(maxX - minX, maxY - minY) / 2 + pad));
+  return { cx: (minX + maxX) / 2, cy: (minY + maxY) / 2, r };
+}
+
+// An outline spanning more than 180° of longitude crosses the antimeridian (Russia's Chukotka, Fiji).
+// Its far-side points project to the other edge of the map, so keep only the side with most points.
+function trimAntimeridian(ring) {
+  if (!ring || !ring.length) return ring;
+  let min = Infinity, max = -Infinity;
+  for (const [lon] of ring) { if (lon < min) min = lon; if (lon > max) max = lon; }
+  if (max - min <= 180) return ring;
+  const east = ring.filter(([lon]) => lon >= 0), west = ring.filter(([lon]) => lon < 0);
+  return east.length >= west.length ? east : west;
+}
+
+const RevealCircles = (() => {
+  const NS = 'http://www.w3.org/2000/svg';
+  let layer = null, rings = [], frame = 0, startedAt = 0, maxR = Infinity, maskSeq = 0;
+
+  const el = (tag, attrs = {}) => {
+    const e = document.createElementNS(NS, tag);
+    for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+    return e;
+  };
+
+  // Each ring is a dashed circle revealed by a mask whose solid stroke grows around it ("drawing" it).
+  function makeRing(project) {
+    const id = `revealMask${++maskSeq}`;
+    const group = el('g');
+    const mask = el('mask', { id, maskUnits: 'userSpaceOnUse' });
+    const reveal = el('circle', { class: 'revealCircleMask' });
+    mask.appendChild(reveal);
+    const ring = el('circle', { class: 'revealCircle', mask: `url(#${id})` });
+    group.append(mask, ring);
+    layer.appendChild(group);
+    return { project, group, ring, reveal };
+  }
+
+  function tick(now) {
+    const t = now - startedAt;
+    const drawn = Math.min(1, t / CIRCLE_DRAW_MS);
+    for (const r of rings) {
+      const c = circleAround(r.project(), { maxR });
+      if (!c) { r.group.setAttribute('visibility', 'hidden'); continue; }
+      r.group.setAttribute('visibility', 'visible');
+      const length = 2 * Math.PI * c.r;
+      for (const circle of [r.ring, r.reveal]) {
+        circle.setAttribute('cx', c.cx);
+        circle.setAttribute('cy', c.cy);
+        circle.setAttribute('r', c.r);
+      }
+      // Start drawing at 12 o'clock, clockwise.
+      r.reveal.setAttribute('transform', `rotate(-90 ${c.cx} ${c.cy})`);
+      r.reveal.setAttribute('stroke-dasharray', `${length} ${length}`);
+      r.reveal.setAttribute('stroke-dashoffset', length * (1 - drawn));
+      // Once drawn, the dashes keep marching around the country.
+      r.ring.setAttribute('stroke-dashoffset', -t * CIRCLE_MARCH_PX_PER_MS);
+    }
+    frame = requestAnimationFrame(tick);
+  }
+
+  function start(svg, projectors, opts = {}) {
+    stop();
+    layer = svg;
+    maxR = opts.maxR ?? Infinity;
+    startedAt = performance.now();
+    rings = projectors.slice(0, MAX_REVEAL_CIRCLES).map(makeRing);
+    frame = requestAnimationFrame(tick);
+  }
+
+  function stop() {
+    cancelAnimationFrame(frame);
+    frame = 0;
+    rings = [];
+    layer?.replaceChildren();
+  }
+
+  return { start, stop };
+})();
 
 const MapView = (() => {
-  const BASE_FILL = 0x17365f;
-  const SELECT_COLOR = 0xa855f7;
+  // Colours come from the CSS tokens (css/style.css :root), read once when the chart is built.
+  let C = null;
+  const palette = () => (C ||= {
+    land: tokenHex('map-land'), line: tokenHex('bg'), hover: tokenHex('text-2'),
+    select: tokenHex('accent'), reveal: tokenHex('good'), outline: tokenHex('text')
+  });
+  const ZOOM_STEP = 1.5;
+  const FLASH_MS = 900; // one fade out-and-back of the revealed country's green
+  // One mouse-wheel notch (100px) zooms one ZOOM_STEP; smaller touchpad scrolls zoom proportionally less.
+  const WHEEL_ZOOM_PER_PX = Math.log(ZOOM_STEP) / 100;
 
-  let root = null, chart = null, series = null, markers = null;
-  let arrowSprites = [], arrowItems = [], arrowFrame = 0;
+  let root = null, chart = null, series = null;
+  let fittedSize = '';
+  let wheelTarget = 0, lastWheel = 0, lastPageScroll = 0;
+  let flashes = [];
   let highlightedIds = new Set();
   let revealTimer = 0, revealResolve = null, revealToken = 0;
   let hooks = { onPick() {}, isSelected: () => false, showNames: () => true, showFlags: () => false, onData() {} };
@@ -1413,7 +1937,7 @@ const MapView = (() => {
     return found;
   }
 
-  /* ---------- arrows that point at the answer ---------- */
+  /* ---------- reveal geometry ---------- */
   function largestRing(geometry) {
     if (!geometry?.coordinates) return null;
     const rings = geometry.type === 'Polygon' ? geometry.coordinates
@@ -1427,50 +1951,23 @@ const MapView = (() => {
     }
     return best;
   }
-  function arrowPoint(polygon) {
-    const ring = largestRing(polygon?.dataItem?.get('geometry'));
-    if (!ring) return null;
-    const pts = ring.length > 1 ? ring.slice(0, -1) : ring;
-    const sum = pts.reduce((a, p) => [a[0] + p[0], a[1] + p[1]], [0, 0]);
-    return { longitude: sum[0] / pts.length, latitude: sum[1] / pts.length };
-  }
-  function clearArrows() {
-    cancelAnimationFrame(arrowFrame);
-    arrowFrame = 0;
-    arrowSprites.forEach(s => { try { s?.animations?.stop(); } catch {} try { s?.dispose(); } catch {} });
-    arrowSprites = [];
-    arrowItems.forEach(i => { try { i?.dispose(); } catch {} });
-    arrowItems = [];
-    if (markers) {
-      try { markers.data.clear(); } catch {}
-      arrowFrame = requestAnimationFrame(() => {
-        arrowFrame = 0;
-        try { markers?.data?.clear(); } catch {}
-      });
-    }
-  }
-  function showArrows(polygons, max = 5) {
-    clearArrows();
-    if (!markers) return;
-    polygons.slice(0, max).forEach(polygon => {
-      const pt = arrowPoint(polygon);
-      if (!pt) return;
-      const item = markers.data.push({ geometry: { type: 'Point', coordinates: [pt.longitude, pt.latitude] } });
-      if (item) arrowItems.push(item);
-    });
+  // The country's main landmass in #revealLayer pixels for the current pan/zoom (convert() includes both).
+  function outlineProjector(polygon) {
+    const ring = trimAntimeridian(largestRing(polygon?.dataItem?.get('geometry')));
+    return () => (ring && chart ? ring.map(([longitude, latitude]) => chart.convert({ longitude, latitude })) : []);
   }
 
   /* ---------- polygon painting ---------- */
   function resetPolygon(p) {
     p.set('forceInactive', false);
     p.states.apply('default');
-    p.setAll({ fill: am5.color(BASE_FILL), stroke: am5.color(0xffffff), strokeWidth: .8 });
+    p.setAll({ fill: am5.color(palette().land), stroke: am5.color(palette().line), strokeWidth: .8 });
   }
   function paintSelection(p, on) {
     p.set('active', !!on);
     if (on) {
       p.states.apply('active');
-      p.setAll({ stroke: am5.color(0xffffff), strokeWidth: 2.2 });
+      p.setAll({ stroke: am5.color(palette().outline), strokeWidth: 2.2 });
     } else resetPolygon(p);
   }
   function select(id, on) {
@@ -1483,7 +1980,9 @@ const MapView = (() => {
     revealToken++;
     clearTimeout(revealTimer);
     highlightedIds.clear();
-    clearArrows();
+    flashes.forEach(anim => { try { anim.stop(); } catch {} });
+    flashes = [];
+    RevealCircles.stop();
     const token = revealToken;
     if (series) {
       series.mapPolygons.each(resetPolygon);
@@ -1507,7 +2006,7 @@ const MapView = (() => {
     done?.(true);
   }
   // Resolves true when the reveal ran its course (or was skipped), false when aborted.
-  function highlight(ids, { duration = 5000, color = 0xffd54f, label = '', arrows = false, maxArrows = 5 } = {}) {
+  function highlight(ids, { duration = 5000, color = palette().reveal, label = '' } = {}) {
     clearHighlight();
     const token = ++revealToken;
     highlightedIds = new Set(ids);
@@ -1515,9 +2014,16 @@ const MapView = (() => {
     polys.forEach(p => {
       p.states.apply('default');
       p.set('forceInactive', true);
-      p.setAll({ fill: am5.color(color), stroke: am5.color(0xffffff), strokeWidth: 2.5 });
+      p.setAll({ fill: am5.color(color), stroke: am5.color(palette().outline), strokeWidth: 2.5 });
+      // Fade to the land colour and back, over and over, until cleanup() stops it.
+      flashes.push(p.animate({
+        key: 'fill', from: am5.color(color), to: am5.color(palette().land),
+        duration: FLASH_MS, loops: Infinity, easing: am5.ease.yoyo(am5.ease.inOut(am5.ease.quad))
+      }));
     });
-    if (arrows) showArrows(polys, maxArrows);
+    const layer = $('revealLayer');
+    const box = layer.getBoundingClientRect();
+    RevealCircles.start(layer, polys.map(outlineProjector), { maxR: 0.6 * Math.max(box.width, box.height) });
     if (label) { setText('revealNotice', label); show('revealNotice'); }
     return new Promise(resolve => {
       revealResolve = resolve;
@@ -1531,8 +2037,50 @@ const MapView = (() => {
   function resetView(immediate = false) {
     chart?.zoomToGeoPoint({ longitude: 0, latitude: 12 }, 1, true, immediate ? 0 : 500);
   }
+  // amCharts records the map's centre (which the drag limits are measured from) only when it fits the map.
+  // The chart is built while the map is hidden (0x0), so that fit is skipped and dragging gets clamped
+  // against the wrong centre. Re-fit whenever the visible size changes. Returns true if a re-fit was queued.
+  function refitIfResized() {
+    const el = $('mapArea');
+    const size = `${el.clientWidth}x${el.clientHeight}`;
+    if (!chart || el.clientWidth === 0 || el.clientHeight === 0 || size === fittedSize) return false;
+    fittedSize = size;
+    root.resize();
+    chart.markDirtyGeometries();
+    return true;
+  }
   function resizeAndReset() {
-    if (root) setTimeout(() => { root.resize(); resetView(true); }, 20);
+    if (!root) return;
+    setTimeout(() => {
+      // The re-fit happens on amCharts' next frame and resets the view itself, so reset after it.
+      if (refitIfResized()) root.events.once('frameended', () => resetView(true));
+      else resetView(true);
+    }, 20);
+  }
+
+  // amCharts' own wheel zoom jumps a full step for every wheel event, however small. Touchpads send dozens
+  // of tiny events per swipe, which sent the map straight to maximum zoom. This zooms by how far you scrolled.
+  function onWheel(e) {
+    if (!chart) return;
+    // A non-cancelable wheel event belongs to a page scroll that is still coasting onto the map. Leave it be.
+    if (!e.cancelable || performance.now() - lastPageScroll < 200) return;
+    const level = chart.get('zoomLevel', 1);
+    const min = chart.get('minZoomLevel', 1), max = chart.get('maxZoomLevel', 24);
+    let dy = e.deltaY;
+    if (e.deltaMode === 1) dy *= 33;                                  // lines
+    else if (e.deltaMode === 2) dy *= e.currentTarget.clientHeight;   // pages
+    // Fully zoomed out and scrolling down: let the page scroll instead.
+    if (dy > 0 && level <= min + 1e-6) return;
+    e.preventDefault();
+    if (dy === 0) return;
+    dy = Math.max(-150, Math.min(150, dy));
+    // Keep zooming from where the last wheel event was heading, so quick notches are not lost mid-animation.
+    const now = performance.now();
+    const from = now - lastWheel < 250 ? wheelTarget : level;
+    lastWheel = now;
+    wheelTarget = Math.max(min, Math.min(max, from * Math.exp(-dy * WHEEL_ZOOM_PER_PX)));
+    if (wheelTarget === level) return;
+    chart.zoomToPoint(root.documentPointToRoot({ x: e.clientX, y: e.clientY }), wheelTarget, false, 120);
   }
   function setTooltips(on) {
     series?.mapPolygons.template.set('tooltipText', on ? '{name}' : '');
@@ -1547,21 +2095,16 @@ const MapView = (() => {
     root = am5.Root.new('mapArea');
     if (!KEEP_AMCHARTS_LOGO) root._logo?.dispose();
     chart = root.container.children.push(am5map.MapChart.new(root, {
-      panX: 'translateX', panY: 'translateY', wheelX: 'none', wheelY: 'zoom', pinchZoom: true,
-      zoomStep: 1.5, minZoomLevel: 1, maxZoomLevel: 24, projection: am5map.geoNaturalEarth1()
+      panX: 'translateX', panY: 'translateY', wheelX: 'none', wheelY: 'none', pinchZoom: true,
+      zoomStep: ZOOM_STEP, minZoomLevel: 1, maxZoomLevel: 24, projection: am5map.geoNaturalEarth1()
     }));
+    $('mapArea').addEventListener('wheel', onWheel, { passive: false });
+    window.addEventListener('scroll', () => { lastPageScroll = performance.now(); }, { passive: true });
+    // Window resized mid-game: re-fit so dragging stays correct.
+    new ResizeObserver(() => {
+      if (refitIfResized()) root.events.once('frameended', () => resetView(true));
+    }).observe($('mapArea'));
     series = chart.series.push(am5map.MapPolygonSeries.new(root, { geoJSON: am5geodata_worldLow, exclude: ['AQ'] }));
-    markers = chart.series.push(am5map.MapPointSeries.new(root, { autoScale: false }));
-    markers.bullets.push(() => {
-      const label = am5.Label.new(root, {
-        text: '▼', fontSize: 46, fill: am5.color(0xff1744), stroke: am5.color(0xffffff), strokeWidth: 2.4,
-        centerX: am5.p50, centerY: am5.p100, dy: -25, className: 'answerArrowText'
-      });
-      arrowSprites.push(label);
-      label.events.on('disposed', () => { arrowSprites = arrowSprites.filter(s => s !== label); });
-      label.animate({ key: 'dy', from: -25, to: -52, duration: 620, easing: am5.ease.inOut(am5.ease.cubic), loops: Infinity, alternate: true });
-      return am5.Bullet.new(root, { sprite: label });
-    });
 
     series.events.on('datavalidated', () => {
       const ids = new Set();
@@ -1573,15 +2116,15 @@ const MapView = (() => {
     const tpl = series.mapPolygons.template;
     tpl.setAll({
       tooltipText: hooks.showNames() ? '{name}' : '', interactive: true,
-      fill: am5.color(BASE_FILL), stroke: am5.color(0xffffff), strokeWidth: .8
+      fill: am5.color(palette().land), stroke: am5.color(palette().line), strokeWidth: .8
     });
-    tpl.states.create('hover', { fill: am5.color(0x22d3ee) });
-    tpl.states.create('active', { fill: am5.color(SELECT_COLOR), stroke: am5.color(0xffffff), strokeWidth: 2.2 });
+    tpl.states.create('hover', { fill: am5.color(palette().hover) });
+    tpl.states.create('active', { fill: am5.color(palette().select), stroke: am5.color(palette().outline), strokeWidth: 2.2 });
 
     tpl.events.on('pointerover', e => {
       const polygon = e.target, id = idOf(polygon);
       if (hooks.isSelected(id)) requestAnimationFrame(() => polygon.states.apply('active'));
-      else if (!highlightedIds.has(id)) { polygon.states.apply('default'); polygon.set('fill', am5.color(BASE_FILL)); }
+      else if (!highlightedIds.has(id)) { polygon.states.apply('default'); polygon.set('fill', am5.color(palette().land)); }
       if (!hooks.showFlags()) return;
       const c = countryByCode(id);
       if (!c) return;
@@ -1660,6 +2203,7 @@ function saveScore() {
   scoreSaved = true;
   $('saveBtn').disabled = true;
   renderBoard();
+  Sound.play('saved');
 }
 
 // A new run (or leaving the menu) makes the next game-over save-able again.
@@ -1682,6 +2226,8 @@ function resetScoreSaved() { scoreSaved = false; }
 */
 
 const DIFFICULTY_SECONDS = { easy: 20, normal: 10, hard: 5, extreme: 3 };
+// After a Flag-mode loss, how long the marked answer tiles stay visible before the overlay covers them.
+const FLAG_REVEAL_MS = 1000;
 
 // A state may only be entered from the listed states ('*' = from anywhere).
 const ALLOWED_FROM = {
@@ -1729,8 +2275,11 @@ const Clock = (() => {
   const now = () => performance.now();
   const ref = () => pausedAt || now();
   const ratio = () => Math.max(0, 1 - (ref() - startAt) / (max * 1000));
+  // Timer colours step from calm to urgent; read from the CSS tokens once, not every frame.
+  let steps = null;
   function paint(r) {
-    const c = `hsl(${120 * r} 85% 67%)`;
+    steps ||= { calm: token('accent'), warn: token('hot'), urgent: token('bad') };
+    const c = r > .5 ? steps.calm : r > .25 ? steps.warn : steps.urgent;
     $('timerBar').style.transform = `scaleX(${r})`;
     $('timerBar').style.background = c;
     $('time').style.color = c;
@@ -1740,16 +2289,18 @@ const Clock = (() => {
     if (!running) return;
     const r = ratio();
     paint(r);
+    if (r > 0 && r <= .25) Sound.tick(Math.ceil(r * max)); // red zone: one tick per shown second
     if (r <= 0) { running = false; onExpire(); return; }
     raf = requestAnimationFrame(tick);
   }
   return {
     start(seconds, cb) {
       max = seconds; onExpire = cb; running = true; pausedAt = 0; startAt = now();
+      Sound.resetTick();
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(tick);
     },
-    stop() { running = false; pausedAt = 0; cancelAnimationFrame(raf); },
+    stop() { running = false; pausedAt = 0; cancelAnimationFrame(raf); Sound.resetTick(); },
     pause() { if (running && !pausedAt) { pausedAt = now(); cancelAnimationFrame(raf); } },
     resume() { if (running && pausedAt) { startAt += now() - pausedAt; pausedAt = 0; raf = requestAnimationFrame(tick); } },
     ratio,
@@ -1779,6 +2330,7 @@ function selectMapCountry(id) {
   if (selectedIds.has(id)) {
     selectedIds.delete(id);
     MapView.select(id, false);
+    Sound.play('unpick');
     updateSelectionUI();
     return;
   }
@@ -1787,11 +2339,13 @@ function selectMapCountry(id) {
     selectedIds.forEach(old => MapView.select(old, false));
     selectedIds.clear();
   } else if (selectedIds.size >= required) {
-    showReaction('Selection full', '#c084fc', 'selectionFull');
+    showReaction('Selection full', token('text-2'), 'selectionFull');
+    Sound.play('full');
     return;
   }
   selectedIds.add(id);
   MapView.select(id, true);
+  Sound.play('pick');
   updateSelectionUI();
 }
 function confirmMapSelection() {
@@ -1808,13 +2362,15 @@ function onCorrect(points, delayMs) {
   Clock.stop();
   score += points;
   setText('score', score);
-  showReaction(points > 1 ? `Correct! +${points} points` : (r > .7 ? 'Damn!' : r > .35 ? 'Nice!' : 'Close!'), '#57f287', '');
+  showReaction(points > 1 ? `Correct! +${points} points` : (r > .7 ? 'Damn!' : r > .35 ? 'Nice!' : 'Close!'), token('good'), '');
+  Sound.play('correct', r); // faster answers sound bigger
   clearSelections();
   const rid = runId;
   later(() => askNext(rid), delayMs);
 }
 
 function applyPenalty() {
+  const r = Clock.ratio(); // before the penalty: how much time the player had used
   const seconds = Math.max(1, Math.floor(maxTime * .33));
   const left = Clock.penalize(seconds);
   const track = $('timerBar').parentElement;
@@ -1824,20 +2380,26 @@ function applyPenalty() {
   later(() => track.classList.remove('penalty'), 520);
   showReaction(`Wrong! −${seconds} second${seconds === 1 ? '' : 's'}`);
   clearSelections();
-  if (left <= 0) lose('The time penalty ran out the clock!');
+  Sound.play('wrong', left <= 0 ? 1 : 1 - r);
+  if (left <= 0) { Sound.play('timesUp', 0, 0.5); lose('The time penalty ran out the clock!'); } // buzzer after the wrong sound
 }
 
-async function lose(reason) {
+async function lose(reason, pickedCode = null) {
   if (state !== 'asking') return;
   const rid = runId;
   setState('revealing');
   Clock.stop();
   clearSelections();
   const eligible = mode === 'flag' ? [target.code] : (questionSpec?.eligible || [target.code]);
-  if (mode !== 'flag') {
+  if (mode === 'flag') {
+    // Show the player's pick (red) and the right answer (green) before the modal or Study card covers them.
+    markAnswers(pickedCode, target.code);
+    await new Promise(resolve => later(resolve, FLAG_REVEAL_MS));
+    if (stale(rid) || state !== 'revealing') return;
+  } else {
     const names = eligible.map(id => countryByCode(id)?.name).filter(Boolean);
     const completed = await MapView.highlight(eligible, {
-      duration: 5000, color: 0xffd54f, arrows: mode === 'map', maxArrows: 1,
+      duration: 5000,
       label: eligible.length > 1 ? `Eligible answers: ${names.join(', ')}` : `Correct answer: ${names[0]}`
     });
     if (stale(rid) || state !== 'revealing' || !completed) return;
@@ -1854,6 +2416,7 @@ function showGameOver(reason, countries) {
   setText('reason', reason);
   $('saveBtn').disabled = false;
   show('modal');
+  Sound.play('runOver');
 }
 
 function openStudyCard(country, reason) {
@@ -1890,7 +2453,7 @@ function pickTarget(pool) {
 
 function beginAsking(seconds, rid) {
   if (stale(rid) || !setState('asking')) return;
-  Clock.start(seconds, () => lose('Time’s up!'));
+  Clock.start(seconds, () => { Sound.play('timesUp'); lose('Time’s up!'); });
   updateSelectionUI();
 }
 
@@ -1909,6 +2472,7 @@ async function askNext(rid) {
     $('answers').replaceChildren(...options.map((x, i) => {
       const b = document.createElement('button');
       b.className = 'answer';
+      b.dataset.code = x.code;
       b.textContent = `${i + 1}. ${x.name}`;
       b.addEventListener('click', () => onFlagAnswer(x.code));
       return b;
@@ -1940,8 +2504,17 @@ async function askNext(rid) {
 
 function onFlagAnswer(code) {
   if (state !== 'asking' || mode !== 'flag') return;
-  if (code === target.code) onCorrect(1, 650);
-  else lose('Wrong answer.');
+  if (code === target.code) { markAnswers(code, code); onCorrect(1, 650); return; }
+  Sound.play('wrong', 1 - Clock.ratio());
+  lose('Wrong answer.', code);
+}
+
+// Marks the picked and the correct flag answer. markAnswers(null, null) clears the marks.
+function markAnswers(pickedCode, correctCode) {
+  $('answers').querySelectorAll('.answer').forEach(b => {
+    b.classList.toggle('is-correct', b.dataset.code === correctCode);
+    b.classList.toggle('is-wrong', b.dataset.code === pickedCode && pickedCode !== correctCode);
+  });
 }
 
 /* ---------- trivia readiness ---------- */
@@ -2011,7 +2584,7 @@ async function startGame(m) {
     catch (error) {
       if (stale(rid)) return;
       setText('question', error.message);
-      showReaction('Trivia data unavailable', '#fb7185', 'penaltyBurst');
+      showReaction('Trivia data unavailable', token('bad'), 'penaltyBurst');
       return;
     }
     if (stale(rid)) return;
@@ -2074,12 +2647,50 @@ document.addEventListener('keydown', e => {
   if (e.code !== 'Space') return;
   if (mode !== 'flag' && state === 'asking' && !$('confirmSelection').disabled) {
     e.preventDefault();
+    Sound.play('click');
     confirmMapSelection();
   } else if (state === 'revealing') {
     e.preventDefault();
+    Sound.play('click');
     MapView.skipReveal(); // skip the 5-second answer reveal
   }
 });
+
+/* ---------- sound ---------- */
+const SOUND_TARGETS = 'button, .difficulty label, .answer, .mapControl';
+// Browsers only allow audio after a user gesture; every gesture also wakes a suspended context.
+// Touch only counts on release, so pointerup/touchend/click are listened to as well.
+['pointerdown', 'pointerup', 'touchend', 'click', 'keydown'].forEach(type => document.addEventListener(type, Sound.unlock, true));
+document.addEventListener('pointerover', e => {
+  if (e.pointerType === 'touch') return; // a tap would otherwise play hover and click together
+  const el = e.target.closest?.(SOUND_TARGETS);
+  if (!el || el.disabled || el === e.relatedTarget?.closest?.(SOUND_TARGETS)) return;
+  Sound.play('hover');
+});
+// Mouse, Enter/Space on a focused button and the 1-4 keys (which call .click()) all land here.
+document.addEventListener('click', e => { if (e.target.closest?.(SOUND_TARGETS)) Sound.play('click'); });
+
+function renderMute() {
+  const muted = Sound.isMuted();
+  document.querySelectorAll('.muteBtn').forEach(b => {
+    b.textContent = muted ? '🔇' : '🔊';
+    b.setAttribute('aria-pressed', String(muted));
+    b.title = muted ? 'Unmute sounds (M)' : 'Mute sounds (M)';
+  });
+}
+function toggleMute() {
+  Sound.setMuted(!Sound.isMuted());
+  renderMute();
+}
+document.querySelectorAll('.muteBtn').forEach(b => b.addEventListener('click', toggleMute));
+document.addEventListener('keydown', e => {
+  if (e.repeat || e.ctrlKey || e.metaKey || e.altKey || (e.key || '').toLowerCase() !== 'm') return;
+  const a = document.activeElement;
+  const typing = a && (a.tagName === 'TEXTAREA' || a.isContentEditable ||
+    (a.tagName === 'INPUT' && a.type !== 'checkbox' && a.type !== 'radio'));
+  if (!typing) toggleMute();
+});
+renderMute();
 
 /* ---------- pause the clock while the tab is hidden ---------- */
 document.addEventListener('visibilitychange', () => {
