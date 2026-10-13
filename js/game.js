@@ -13,6 +13,8 @@
 */
 
 const DIFFICULTY_SECONDS = { easy: 20, normal: 10, hard: 5, extreme: 3 };
+// After a Flag-mode loss, how long the marked answer tiles stay visible before the overlay covers them.
+const FLAG_REVEAL_MS = 1000;
 
 // A state may only be entered from the listed states ('*' = from anywhere).
 const ALLOWED_FROM = {
@@ -161,14 +163,19 @@ function applyPenalty() {
   if (left <= 0) lose('The time penalty ran out the clock!');
 }
 
-async function lose(reason) {
+async function lose(reason, pickedCode = null) {
   if (state !== 'asking') return;
   const rid = runId;
   setState('revealing');
   Clock.stop();
   clearSelections();
   const eligible = mode === 'flag' ? [target.code] : (questionSpec?.eligible || [target.code]);
-  if (mode !== 'flag') {
+  if (mode === 'flag') {
+    // Show the player's pick (red) and the right answer (green) before the modal or Study card covers them.
+    markAnswers(pickedCode, target.code);
+    await new Promise(resolve => later(resolve, FLAG_REVEAL_MS));
+    if (stale(rid) || state !== 'revealing') return;
+  } else {
     const names = eligible.map(id => countryByCode(id)?.name).filter(Boolean);
     const completed = await MapView.highlight(eligible, {
       duration: 5000, color: tokenHex('good'), arrows: mode === 'map', maxArrows: 1,
@@ -275,9 +282,8 @@ async function askNext(rid) {
 
 function onFlagAnswer(code) {
   if (state !== 'asking' || mode !== 'flag') return;
-  markAnswers(code, target.code);
-  if (code === target.code) onCorrect(1, 650);
-  else lose('Wrong answer.');
+  if (code === target.code) { markAnswers(code, code); onCorrect(1, 650); }
+  else lose('Wrong answer.', code);
 }
 
 // Marks the picked and the correct flag answer. markAnswers(null, null) clears the marks.

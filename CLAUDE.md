@@ -13,7 +13,8 @@ no framework, no bundler, no server. The only external code is amCharts (map) lo
   Python is not installed on the main dev machine, so `geogryphon_single.html` is stale (pre-V14) until rebuilt.
 - There is no test runner. Checks are plain Node scripts in `tools/` (exit 1 on failure):
   - after CSS edits: `node tools/check-tokens.js` (no hardcoded design values) and `node tools/contrast.js` (WCAG AA)
-  - after JS edits: `node --check <file>`, `node tools/test-tokens-js.js`, `node tools/test-answer-states.js`
+  - after JS edits: `node --check <file>`, `node tools/test-tokens-js.js`, `node tools/test-answer-states.js`,
+    `node tools/test-flag-reveal.js`
   Then play each mode once in the browser. For logic changes, test with a stubbed DOM and stubbed `MapView`
   rather than loading amCharts.
 
