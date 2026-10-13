@@ -1,9 +1,52 @@
 /* Endless Geography Trivia styles */
 :root {
-  --bg:#061324;
-  --cyan:#22d3ee;
-  --muted:#94a3b8;
-  --pad:14px;
+  /* colour */
+  --bg:#1b1446;
+  --surface-1:#261d5e;
+  --surface-2:#3b2f8f;
+  --edge:#120d33;
+  --text:#ffffff;
+  --text-2:#b9b0ff;
+  --accent:#ffd23f;
+  --accent-edge:#c99c00;
+  --on-accent:#1b1446;
+  --hot:#ff5d73;
+  --good:#3ee08f;
+  --bad:#ff4d6d;
+  --map-land:#4a3fb0;
+  --map-sea:#140f38;
+  --scrim:#0d0a26e6;
+  --line:#ffffff1f;
+  --flag-frame:#d5dde8;
+  /* type */
+  --font-display:'Fredoka',system-ui,sans-serif;
+  --font-body:'Nunito',system-ui,sans-serif;
+  --fs-12:.75rem;
+  --fs-14:.875rem;
+  --fs-18:1.125rem;
+  --fs-28:1.75rem;
+  --fs-44:2.75rem;
+  /* fluid headline sizes: grow from a scale step with the viewport */
+  --fs-hero:clamp(2.75rem,7vw,5rem);
+  --fs-question:clamp(1.75rem,3vw,2.5rem);
+  --fs-reaction:clamp(1.75rem,6vw,4.5rem);
+  --fw-500:500;
+  --fw-600:600;
+  --fw-700:700;
+  /* shape and space */
+  --r-8:8px;
+  --r-14:14px;
+  --r-24:24px;
+  --r-pill:999px;
+  --s-4:4px;
+  --s-8:8px;
+  --s-12:12px;
+  --s-16:16px;
+  --s-24:24px;
+  --s-32:32px;
+  --pad:var(--s-16);
+  /* motion */
+  --press:120ms;
 }
 
 * {
