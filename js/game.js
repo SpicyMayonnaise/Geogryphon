@@ -243,6 +243,7 @@ async function askNext(rid) {
     $('answers').replaceChildren(...options.map((x, i) => {
       const b = document.createElement('button');
       b.className = 'answer';
+      b.dataset.code = x.code;
       b.textContent = `${i + 1}. ${x.name}`;
       b.addEventListener('click', () => onFlagAnswer(x.code));
       return b;
@@ -274,8 +275,17 @@ async function askNext(rid) {
 
 function onFlagAnswer(code) {
   if (state !== 'asking' || mode !== 'flag') return;
+  markAnswers(code, target.code);
   if (code === target.code) onCorrect(1, 650);
   else lose('Wrong answer.');
+}
+
+// Marks the picked and the correct flag answer. markAnswers(null, null) clears the marks.
+function markAnswers(pickedCode, correctCode) {
+  $('answers').querySelectorAll('.answer').forEach(b => {
+    b.classList.toggle('is-correct', b.dataset.code === correctCode);
+    b.classList.toggle('is-wrong', b.dataset.code === pickedCode && pickedCode !== correctCode);
+  });
 }
 
 /* ---------- trivia readiness ---------- */
