@@ -14,7 +14,8 @@ no framework, no bundler, no server. The only external code is amCharts (map) lo
 - There is no test runner. Checks are plain Node scripts in `tools/` (exit 1 on failure):
   - after CSS edits: `node tools/check-tokens.js` (no hardcoded design values) and `node tools/contrast.js` (WCAG AA)
   - after JS edits: `node --check <file>`, `node tools/test-tokens-js.js`, `node tools/test-answer-states.js`,
-    `node tools/test-flag-reveal.js`, `node tools/test-reveal-circle.js`
+    `node tools/test-flag-reveal.js`, `node tools/test-reveal-circle.js`, `node tools/test-sound.js`,
+    `node tools/test-sound-wiring.js`
   Then play each mode once in the browser. For logic changes, test with a stubbed DOM and stubbed `MapView`
   rather than loading amCharts.
 
@@ -42,6 +43,7 @@ scope, and **load order in `index.html` matters**.
 | File | Purpose |
 |---|---|
 | `js/util.js` | `$`, `setText`, `show`/`hide`, `shuffle`, safe storage `LS`, `showReaction` |
+| `js/sound.js` | `Sound`: generated sound effects (Web Audio), mute; the only file that touches audio |
 | `js/data/countries.js` | Bundled country rows and the expertise tiers (the data source of truth) |
 | `js/data/flag-study.js` | Study Mode flag-meaning text. Large, data only: do not read it whole |
 | `js/countries.js` | Builds `DATA` from the rows, the pools per mode, optional population refresh |
@@ -81,6 +83,19 @@ Rules to keep:
   dragging down or right gets blocked when zoomed in.
 - When testing in a hidden browser pane, frames are throttled (~2 fps), so amCharts animations and re-fits
   land late. Wait longer or take a screenshot before reading chart state.
+
+## Sound (js/sound.js)
+
+- All sounds are generated in code (`SOUND_RECIPES`: intensity 0..1 → notes); no audio files.
+- `Sound` is silent until the first pointerdown/keydown (`Sound.unlock`, wired in `main.js`), when muted, or
+  when Web Audio is missing or fails. It never throws.
+- Correct uses the share of time left as intensity, wrong uses the share used (1 at a penalty that empties the
+  clock). `Clock` calls `Sound.tick` every frame in the red zone (last 25%); `Sound` plays once per new second.
+- Hover/click come from delegated listeners in `main.js` on `button, .difficulty label, .answer, .mapControl`;
+  touch never plays hover. New buttons get sounds automatically.
+- Mute: `.muteBtn` buttons and the `M` key; stored in `LS` key `geogryphon.muted`. A volume slider waits for the
+  settings menu.
+- Tuning by ear: `tools/soundboard.html` (local only, not committed) plays every recipe at 0, 0.5 and 1.
 
 ## Data and question rules
 
