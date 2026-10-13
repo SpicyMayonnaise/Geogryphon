@@ -14,7 +14,7 @@ no framework, no bundler, no server. The only external code is amCharts (map) lo
 - There is no test runner. Checks are plain Node scripts in `tools/` (exit 1 on failure):
   - after CSS edits: `node tools/check-tokens.js` (no hardcoded design values) and `node tools/contrast.js` (WCAG AA)
   - after JS edits: `node --check <file>`, `node tools/test-tokens-js.js`, `node tools/test-answer-states.js`,
-    `node tools/test-flag-reveal.js`
+    `node tools/test-flag-reveal.js`, `node tools/test-reveal-circle.js`
   Then play each mode once in the browser. For logic changes, test with a stubbed DOM and stubbed `MapView`
   rather than loading amCharts.
 
@@ -65,6 +65,13 @@ Rules to keep:
 - Game code talks to the map only through `MapView`, so it can be stubbed in tests.
 
 ## Map controls (js/map.js)
+
+- Loss reveal (`MapView.highlight`): each answer country flashes green ↔ land colour (`FLASH_MS`, amCharts
+  `animate` with a yoyo ease) and gets a dashed white ring drawn around it in the `#revealLayer` SVG over the map
+  (`RevealCircles`, `circleAround`). The ring is re-projected every frame from the country's main landmass
+  (`largestRing` + `trimAntimeridian`) via `chart.convert`, so it follows pan/zoom; min radius 24px, max 5 rings.
+  `cleanup()` stops the flash animations and empties the layer. There is no arrow any more (removed on purpose).
+- No reduced-motion handling for these animations until the game has a settings menu (user decision).
 
 - The amCharts logo stays visible (`KEEP_AMCHARTS_LOGO = true`): the free licence requires it.
 - amCharts' own wheel zoom is off (`wheelY: 'none'`). `onWheel` zooms in proportion to the scroll distance

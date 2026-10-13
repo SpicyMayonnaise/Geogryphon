@@ -178,7 +178,7 @@ async function lose(reason, pickedCode = null) {
   } else {
     const names = eligible.map(id => countryByCode(id)?.name).filter(Boolean);
     const completed = await MapView.highlight(eligible, {
-      duration: 5000, color: tokenHex('good'), arrows: mode === 'map', maxArrows: 1,
+      duration: 5000,
       label: eligible.length > 1 ? `Eligible answers: ${names.join(', ')}` : `Correct answer: ${names[0]}`
     });
     if (stale(rid) || state !== 'revealing' || !completed) return;

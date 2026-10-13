@@ -6,21 +6,121 @@
 // Removing it requires a paid amCharts licence, so the logo stays on.
 const KEEP_AMCHARTS_LOGO = true;
 
+/* ---------- reveal circles: a dashed ring drawn around each revealed country ----------
+   Lives in an SVG layer over the map (#revealLayer) and knows nothing about amCharts: MapView passes a
+   projector per country that returns the country's outline in layer pixels for the current pan/zoom. */
+const CIRCLE_MIN_R = 24;          // tiny countries still get a visible ring
+const CIRCLE_PAD = 12;            // breathing room between the outline and the ring
+const CIRCLE_DRAW_MS = 700;       // time for the ring to draw itself once around
+const CIRCLE_MARCH_PX_PER_MS = 0.03;
+const MAX_REVEAL_CIRCLES = 5;
+
+// Circle around projected points: centred on their bounding box, radius half its diagonal plus padding.
+function circleAround(points, { minR = CIRCLE_MIN_R, maxR = Infinity, pad = CIRCLE_PAD } = {}) {
+  if (!points || !points.length) return null;
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const p of points) {
+    if (p.x < minX) minX = p.x;
+    if (p.x > maxX) maxX = p.x;
+    if (p.y < minY) minY = p.y;
+    if (p.y > maxY) maxY = p.y;
+  }
+  const r = Math.min(maxR, Math.max(minR, Math.hypot(maxX - minX, maxY - minY) / 2 + pad));
+  return { cx: (minX + maxX) / 2, cy: (minY + maxY) / 2, r };
+}
+
+// An outline spanning more than 180° of longitude crosses the antimeridian (Russia's Chukotka, Fiji).
+// Its far-side points project to the other edge of the map, so keep only the side with most points.
+function trimAntimeridian(ring) {
+  if (!ring || !ring.length) return ring;
+  let min = Infinity, max = -Infinity;
+  for (const [lon] of ring) { if (lon < min) min = lon; if (lon > max) max = lon; }
+  if (max - min <= 180) return ring;
+  const east = ring.filter(([lon]) => lon >= 0), west = ring.filter(([lon]) => lon < 0);
+  return east.length >= west.length ? east : west;
+}
+
+const RevealCircles = (() => {
+  const NS = 'http://www.w3.org/2000/svg';
+  let layer = null, rings = [], frame = 0, startedAt = 0, maxR = Infinity, maskSeq = 0;
+
+  const el = (tag, attrs = {}) => {
+    const e = document.createElementNS(NS, tag);
+    for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+    return e;
+  };
+
+  // Each ring is a dashed circle revealed by a mask whose solid stroke grows around it ("drawing" it).
+  function makeRing(project) {
+    const id = `revealMask${++maskSeq}`;
+    const group = el('g');
+    const mask = el('mask', { id, maskUnits: 'userSpaceOnUse' });
+    const reveal = el('circle', { class: 'revealCircleMask' });
+    mask.appendChild(reveal);
+    const ring = el('circle', { class: 'revealCircle', mask: `url(#${id})` });
+    group.append(mask, ring);
+    layer.appendChild(group);
+    return { project, group, ring, reveal };
+  }
+
+  function tick(now) {
+    const t = now - startedAt;
+    const drawn = Math.min(1, t / CIRCLE_DRAW_MS);
+    for (const r of rings) {
+      const c = circleAround(r.project(), { maxR });
+      if (!c) { r.group.setAttribute('visibility', 'hidden'); continue; }
+      r.group.setAttribute('visibility', 'visible');
+      const length = 2 * Math.PI * c.r;
+      for (const circle of [r.ring, r.reveal]) {
+        circle.setAttribute('cx', c.cx);
+        circle.setAttribute('cy', c.cy);
+        circle.setAttribute('r', c.r);
+      }
+      // Start drawing at 12 o'clock, clockwise.
+      r.reveal.setAttribute('transform', `rotate(-90 ${c.cx} ${c.cy})`);
+      r.reveal.setAttribute('stroke-dasharray', `${length} ${length}`);
+      r.reveal.setAttribute('stroke-dashoffset', length * (1 - drawn));
+      // Once drawn, the dashes keep marching around the country.
+      r.ring.setAttribute('stroke-dashoffset', -t * CIRCLE_MARCH_PX_PER_MS);
+    }
+    frame = requestAnimationFrame(tick);
+  }
+
+  function start(svg, projectors, opts = {}) {
+    stop();
+    layer = svg;
+    maxR = opts.maxR ?? Infinity;
+    startedAt = performance.now();
+    rings = projectors.slice(0, MAX_REVEAL_CIRCLES).map(makeRing);
+    frame = requestAnimationFrame(tick);
+  }
+
+  function stop() {
+    cancelAnimationFrame(frame);
+    frame = 0;
+    rings = [];
+    layer?.replaceChildren();
+  }
+
+  return { start, stop };
+})();
+
 const MapView = (() => {
   // Colours come from the CSS tokens (css/style.css :root), read once when the chart is built.
   let C = null;
   const palette = () => (C ||= {
     land: tokenHex('map-land'), line: tokenHex('bg'), hover: tokenHex('text-2'),
-    select: tokenHex('accent'), reveal: tokenHex('good'), arrow: tokenHex('hot'), outline: tokenHex('text')
+    select: tokenHex('accent'), reveal: tokenHex('good'), outline: tokenHex('text')
   });
   const ZOOM_STEP = 1.5;
+  const FLASH_MS = 900; // one fade out-and-back of the revealed country's green
   // One mouse-wheel notch (100px) zooms one ZOOM_STEP; smaller touchpad scrolls zoom proportionally less.
   const WHEEL_ZOOM_PER_PX = Math.log(ZOOM_STEP) / 100;
 
-  let root = null, chart = null, series = null, markers = null;
+  let root = null, chart = null, series = null;
   let fittedSize = '';
   let wheelTarget = 0, lastWheel = 0, lastPageScroll = 0;
-  let arrowSprites = [], arrowItems = [], arrowFrame = 0;
+  let flashes = [];
   let highlightedIds = new Set();
   let revealTimer = 0, revealResolve = null, revealToken = 0;
   let hooks = { onPick() {}, isSelected: () => false, showNames: () => true, showFlags: () => false, onData() {} };
@@ -45,7 +145,7 @@ const MapView = (() => {
     return found;
   }
 
-  /* ---------- arrows that point at the answer ---------- */
+  /* ---------- reveal geometry ---------- */
   function largestRing(geometry) {
     if (!geometry?.coordinates) return null;
     const rings = geometry.type === 'Polygon' ? geometry.coordinates
@@ -59,37 +159,10 @@ const MapView = (() => {
     }
     return best;
   }
-  function arrowPoint(polygon) {
-    const ring = largestRing(polygon?.dataItem?.get('geometry'));
-    if (!ring) return null;
-    const pts = ring.length > 1 ? ring.slice(0, -1) : ring;
-    const sum = pts.reduce((a, p) => [a[0] + p[0], a[1] + p[1]], [0, 0]);
-    return { longitude: sum[0] / pts.length, latitude: sum[1] / pts.length };
-  }
-  function clearArrows() {
-    cancelAnimationFrame(arrowFrame);
-    arrowFrame = 0;
-    arrowSprites.forEach(s => { try { s?.animations?.stop(); } catch {} try { s?.dispose(); } catch {} });
-    arrowSprites = [];
-    arrowItems.forEach(i => { try { i?.dispose(); } catch {} });
-    arrowItems = [];
-    if (markers) {
-      try { markers.data.clear(); } catch {}
-      arrowFrame = requestAnimationFrame(() => {
-        arrowFrame = 0;
-        try { markers?.data?.clear(); } catch {}
-      });
-    }
-  }
-  function showArrows(polygons, max = 5) {
-    clearArrows();
-    if (!markers) return;
-    polygons.slice(0, max).forEach(polygon => {
-      const pt = arrowPoint(polygon);
-      if (!pt) return;
-      const item = markers.data.push({ geometry: { type: 'Point', coordinates: [pt.longitude, pt.latitude] } });
-      if (item) arrowItems.push(item);
-    });
+  // The country's main landmass in #revealLayer pixels for the current pan/zoom (convert() includes both).
+  function outlineProjector(polygon) {
+    const ring = trimAntimeridian(largestRing(polygon?.dataItem?.get('geometry')));
+    return () => (ring && chart ? ring.map(([longitude, latitude]) => chart.convert({ longitude, latitude })) : []);
   }
 
   /* ---------- polygon painting ---------- */
@@ -115,7 +188,9 @@ const MapView = (() => {
     revealToken++;
     clearTimeout(revealTimer);
     highlightedIds.clear();
-    clearArrows();
+    flashes.forEach(anim => { try { anim.stop(); } catch {} });
+    flashes = [];
+    RevealCircles.stop();
     const token = revealToken;
     if (series) {
       series.mapPolygons.each(resetPolygon);
@@ -139,7 +214,7 @@ const MapView = (() => {
     done?.(true);
   }
   // Resolves true when the reveal ran its course (or was skipped), false when aborted.
-  function highlight(ids, { duration = 5000, color = palette().reveal, label = '', arrows = false, maxArrows = 5 } = {}) {
+  function highlight(ids, { duration = 5000, color = palette().reveal, label = '' } = {}) {
     clearHighlight();
     const token = ++revealToken;
     highlightedIds = new Set(ids);
@@ -148,8 +223,15 @@ const MapView = (() => {
       p.states.apply('default');
       p.set('forceInactive', true);
       p.setAll({ fill: am5.color(color), stroke: am5.color(palette().outline), strokeWidth: 2.5 });
+      // Fade to the land colour and back, over and over, until cleanup() stops it.
+      flashes.push(p.animate({
+        key: 'fill', from: am5.color(color), to: am5.color(palette().land),
+        duration: FLASH_MS, loops: Infinity, easing: am5.ease.yoyo(am5.ease.inOut(am5.ease.quad))
+      }));
     });
-    if (arrows) showArrows(polys, maxArrows);
+    const layer = $('revealLayer');
+    const box = layer.getBoundingClientRect();
+    RevealCircles.start(layer, polys.map(outlineProjector), { maxR: 0.6 * Math.max(box.width, box.height) });
     if (label) { setText('revealNotice', label); show('revealNotice'); }
     return new Promise(resolve => {
       revealResolve = resolve;
@@ -231,17 +313,6 @@ const MapView = (() => {
       if (refitIfResized()) root.events.once('frameended', () => resetView(true));
     }).observe($('mapArea'));
     series = chart.series.push(am5map.MapPolygonSeries.new(root, { geoJSON: am5geodata_worldLow, exclude: ['AQ'] }));
-    markers = chart.series.push(am5map.MapPointSeries.new(root, { autoScale: false }));
-    markers.bullets.push(() => {
-      const label = am5.Label.new(root, {
-        text: '▼', fontSize: 46, fill: am5.color(palette().arrow), stroke: am5.color(palette().outline), strokeWidth: 2.4,
-        centerX: am5.p50, centerY: am5.p100, dy: -25, className: 'answerArrowText'
-      });
-      arrowSprites.push(label);
-      label.events.on('disposed', () => { arrowSprites = arrowSprites.filter(s => s !== label); });
-      label.animate({ key: 'dy', from: -25, to: -52, duration: 620, easing: am5.ease.inOut(am5.ease.cubic), loops: Infinity, alternate: true });
-      return am5.Bullet.new(root, { sprite: label });
-    });
 
     series.events.on('datavalidated', () => {
       const ids = new Set();
