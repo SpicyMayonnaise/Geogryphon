@@ -76,12 +76,14 @@ const Clock = (() => {
     if (!running) return;
     const r = ratio();
     paint(r);
+    if (r > 0 && r <= .25) Sound.tick(Math.ceil(r * max)); // red zone: one tick per shown second
     if (r <= 0) { running = false; onExpire(); return; }
     raf = requestAnimationFrame(tick);
   }
   return {
     start(seconds, cb) {
       max = seconds; onExpire = cb; running = true; pausedAt = 0; startAt = now();
+      Sound.resetTick();
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(tick);
     },
@@ -115,6 +117,7 @@ function selectMapCountry(id) {
   if (selectedIds.has(id)) {
     selectedIds.delete(id);
     MapView.select(id, false);
+    Sound.play('unpick');
     updateSelectionUI();
     return;
   }
@@ -124,10 +127,12 @@ function selectMapCountry(id) {
     selectedIds.clear();
   } else if (selectedIds.size >= required) {
     showReaction('Selection full', token('text-2'), 'selectionFull');
+    Sound.play('full');
     return;
   }
   selectedIds.add(id);
   MapView.select(id, true);
+  Sound.play('pick');
   updateSelectionUI();
 }
 function confirmMapSelection() {
@@ -145,12 +150,14 @@ function onCorrect(points, delayMs) {
   score += points;
   setText('score', score);
   showReaction(points > 1 ? `Correct! +${points} points` : (r > .7 ? 'Damn!' : r > .35 ? 'Nice!' : 'Close!'), token('good'), '');
+  Sound.play('correct', r); // faster answers sound bigger
   clearSelections();
   const rid = runId;
   later(() => askNext(rid), delayMs);
 }
 
 function applyPenalty() {
+  const r = Clock.ratio(); // before the penalty: how much time the player had used
   const seconds = Math.max(1, Math.floor(maxTime * .33));
   const left = Clock.penalize(seconds);
   const track = $('timerBar').parentElement;
@@ -160,7 +167,8 @@ function applyPenalty() {
   later(() => track.classList.remove('penalty'), 520);
   showReaction(`Wrong! −${seconds} second${seconds === 1 ? '' : 's'}`);
   clearSelections();
-  if (left <= 0) lose('The time penalty ran out the clock!');
+  Sound.play('wrong', left <= 0 ? 1 : 1 - r);
+  if (left <= 0) { Sound.play('timesUp'); lose('The time penalty ran out the clock!'); }
 }
 
 async function lose(reason, pickedCode = null) {
@@ -195,6 +203,7 @@ function showGameOver(reason, countries) {
   setText('reason', reason);
   $('saveBtn').disabled = false;
   show('modal');
+  Sound.play('runOver');
 }
 
 function openStudyCard(country, reason) {
@@ -231,7 +240,7 @@ function pickTarget(pool) {
 
 function beginAsking(seconds, rid) {
   if (stale(rid) || !setState('asking')) return;
-  Clock.start(seconds, () => lose('Time’s up!'));
+  Clock.start(seconds, () => { Sound.play('timesUp'); lose('Time’s up!'); });
   updateSelectionUI();
 }
 
@@ -282,8 +291,9 @@ async function askNext(rid) {
 
 function onFlagAnswer(code) {
   if (state !== 'asking' || mode !== 'flag') return;
-  if (code === target.code) { markAnswers(code, code); onCorrect(1, 650); }
-  else lose('Wrong answer.', code);
+  if (code === target.code) { markAnswers(code, code); onCorrect(1, 650); return; }
+  Sound.play('wrong', 1 - Clock.ratio());
+  lose('Wrong answer.', code);
 }
 
 // Marks the picked and the correct flag answer. markAnswers(null, null) clears the marks.

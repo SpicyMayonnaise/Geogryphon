@@ -42,6 +42,7 @@ function saveScore() {
   scoreSaved = true;
   $('saveBtn').disabled = true;
   renderBoard();
+  Sound.play('saved');
 }
 
 // A new run (or leaving the menu) makes the next game-over save-able again.
