@@ -23,8 +23,18 @@ const LS = {
   removeItem(k) { try { localStorage.removeItem(k); } catch { /* ignore */ } }
 };
 
+// Design tokens live in css/style.css (:root). JS reads them instead of hardcoding colours.
+const token = name => getComputedStyle(document.documentElement).getPropertyValue(`--${name}`).trim();
+
+// amCharts wants colours as numbers (0xrrggbb).
+function tokenHex(name) {
+  const v = token(name);
+  if (!/^#[0-9a-fA-F]{6}$/.test(v)) throw new Error(`Unknown colour token --${name}`);
+  return parseInt(v.slice(1), 16);
+}
+
 // The big floating reaction text ("Nice!", "Wrong! -3 seconds", ...).
-function showReaction(text, color = '#991b1b', extra = 'penaltyBurst') {
+function showReaction(text, color = token('bad'), extra = 'penaltyBurst') {
   const e = $('reaction');
   e.textContent = text;
   e.style.color = color;

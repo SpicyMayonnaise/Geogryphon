@@ -60,8 +60,11 @@ const Clock = (() => {
   const now = () => performance.now();
   const ref = () => pausedAt || now();
   const ratio = () => Math.max(0, 1 - (ref() - startAt) / (max * 1000));
+  // Timer colours step from calm to urgent; read from the CSS tokens once, not every frame.
+  let steps = null;
   function paint(r) {
-    const c = `hsl(${120 * r} 85% 67%)`;
+    steps ||= { calm: token('accent'), warn: token('hot'), urgent: token('bad') };
+    const c = r > .5 ? steps.calm : r > .25 ? steps.warn : steps.urgent;
     $('timerBar').style.transform = `scaleX(${r})`;
     $('timerBar').style.background = c;
     $('time').style.color = c;
@@ -118,7 +121,7 @@ function selectMapCountry(id) {
     selectedIds.forEach(old => MapView.select(old, false));
     selectedIds.clear();
   } else if (selectedIds.size >= required) {
-    showReaction('Selection full', '#c084fc', 'selectionFull');
+    showReaction('Selection full', token('text-2'), 'selectionFull');
     return;
   }
   selectedIds.add(id);
@@ -139,7 +142,7 @@ function onCorrect(points, delayMs) {
   Clock.stop();
   score += points;
   setText('score', score);
-  showReaction(points > 1 ? `Correct! +${points} points` : (r > .7 ? 'Damn!' : r > .35 ? 'Nice!' : 'Close!'), '#57f287', '');
+  showReaction(points > 1 ? `Correct! +${points} points` : (r > .7 ? 'Damn!' : r > .35 ? 'Nice!' : 'Close!'), token('good'), '');
   clearSelections();
   const rid = runId;
   later(() => askNext(rid), delayMs);
@@ -168,7 +171,7 @@ async function lose(reason) {
   if (mode !== 'flag') {
     const names = eligible.map(id => countryByCode(id)?.name).filter(Boolean);
     const completed = await MapView.highlight(eligible, {
-      duration: 5000, color: 0xffd54f, arrows: mode === 'map', maxArrows: 1,
+      duration: 5000, color: tokenHex('good'), arrows: mode === 'map', maxArrows: 1,
       label: eligible.length > 1 ? `Eligible answers: ${names.join(', ')}` : `Correct answer: ${names[0]}`
     });
     if (stale(rid) || state !== 'revealing' || !completed) return;
@@ -342,7 +345,7 @@ async function startGame(m) {
     catch (error) {
       if (stale(rid)) return;
       setText('question', error.message);
-      showReaction('Trivia data unavailable', '#fb7185', 'penaltyBurst');
+      showReaction('Trivia data unavailable', token('bad'), 'penaltyBurst');
       return;
     }
     if (stale(rid)) return;

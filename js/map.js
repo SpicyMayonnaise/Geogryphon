@@ -7,8 +7,12 @@
 const KEEP_AMCHARTS_LOGO = true;
 
 const MapView = (() => {
-  const BASE_FILL = 0x17365f;
-  const SELECT_COLOR = 0xa855f7;
+  // Colours come from the CSS tokens (css/style.css :root), read once when the chart is built.
+  let C = null;
+  const palette = () => (C ||= {
+    land: tokenHex('map-land'), line: tokenHex('bg'), hover: tokenHex('text-2'),
+    select: tokenHex('accent'), reveal: tokenHex('good'), arrow: tokenHex('hot'), outline: tokenHex('text')
+  });
   const ZOOM_STEP = 1.5;
   // One mouse-wheel notch (100px) zooms one ZOOM_STEP; smaller touchpad scrolls zoom proportionally less.
   const WHEEL_ZOOM_PER_PX = Math.log(ZOOM_STEP) / 100;
@@ -92,13 +96,13 @@ const MapView = (() => {
   function resetPolygon(p) {
     p.set('forceInactive', false);
     p.states.apply('default');
-    p.setAll({ fill: am5.color(BASE_FILL), stroke: am5.color(0xffffff), strokeWidth: .8 });
+    p.setAll({ fill: am5.color(palette().land), stroke: am5.color(palette().line), strokeWidth: .8 });
   }
   function paintSelection(p, on) {
     p.set('active', !!on);
     if (on) {
       p.states.apply('active');
-      p.setAll({ stroke: am5.color(0xffffff), strokeWidth: 2.2 });
+      p.setAll({ stroke: am5.color(palette().outline), strokeWidth: 2.2 });
     } else resetPolygon(p);
   }
   function select(id, on) {
@@ -135,7 +139,7 @@ const MapView = (() => {
     done?.(true);
   }
   // Resolves true when the reveal ran its course (or was skipped), false when aborted.
-  function highlight(ids, { duration = 5000, color = 0xffd54f, label = '', arrows = false, maxArrows = 5 } = {}) {
+  function highlight(ids, { duration = 5000, color = palette().reveal, label = '', arrows = false, maxArrows = 5 } = {}) {
     clearHighlight();
     const token = ++revealToken;
     highlightedIds = new Set(ids);
@@ -143,7 +147,7 @@ const MapView = (() => {
     polys.forEach(p => {
       p.states.apply('default');
       p.set('forceInactive', true);
-      p.setAll({ fill: am5.color(color), stroke: am5.color(0xffffff), strokeWidth: 2.5 });
+      p.setAll({ fill: am5.color(color), stroke: am5.color(palette().outline), strokeWidth: 2.5 });
     });
     if (arrows) showArrows(polys, maxArrows);
     if (label) { setText('revealNotice', label); show('revealNotice'); }
@@ -230,7 +234,7 @@ const MapView = (() => {
     markers = chart.series.push(am5map.MapPointSeries.new(root, { autoScale: false }));
     markers.bullets.push(() => {
       const label = am5.Label.new(root, {
-        text: '▼', fontSize: 46, fill: am5.color(0xff1744), stroke: am5.color(0xffffff), strokeWidth: 2.4,
+        text: '▼', fontSize: 46, fill: am5.color(palette().arrow), stroke: am5.color(palette().outline), strokeWidth: 2.4,
         centerX: am5.p50, centerY: am5.p100, dy: -25, className: 'answerArrowText'
       });
       arrowSprites.push(label);
@@ -249,15 +253,15 @@ const MapView = (() => {
     const tpl = series.mapPolygons.template;
     tpl.setAll({
       tooltipText: hooks.showNames() ? '{name}' : '', interactive: true,
-      fill: am5.color(BASE_FILL), stroke: am5.color(0xffffff), strokeWidth: .8
+      fill: am5.color(palette().land), stroke: am5.color(palette().line), strokeWidth: .8
     });
-    tpl.states.create('hover', { fill: am5.color(0x22d3ee) });
-    tpl.states.create('active', { fill: am5.color(SELECT_COLOR), stroke: am5.color(0xffffff), strokeWidth: 2.2 });
+    tpl.states.create('hover', { fill: am5.color(palette().hover) });
+    tpl.states.create('active', { fill: am5.color(palette().select), stroke: am5.color(palette().outline), strokeWidth: 2.2 });
 
     tpl.events.on('pointerover', e => {
       const polygon = e.target, id = idOf(polygon);
       if (hooks.isSelected(id)) requestAnimationFrame(() => polygon.states.apply('active'));
-      else if (!highlightedIds.has(id)) { polygon.states.apply('default'); polygon.set('fill', am5.color(BASE_FILL)); }
+      else if (!highlightedIds.has(id)) { polygon.states.apply('default'); polygon.set('fill', am5.color(palette().land)); }
       if (!hooks.showFlags()) return;
       const c = countryByCode(id);
       if (!c) return;
