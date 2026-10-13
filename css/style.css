@@ -1,0 +1,674 @@
+/* Endless Geography Trivia styles */
+:root {
+  --bg:#061324;
+  --cyan:#22d3ee;
+  --muted:#94a3b8;
+}
+
+* {
+  box-sizing:border-box;
+}
+
+body {
+  margin:0;
+  font:16px system-ui;
+  color:#fff;
+  background:radial-gradient(circle at 10% 0,#0e749044,transparent 35%),var(--bg);
+}
+
+button,input {
+  font:inherit;
+}
+
+.wrap {
+  max-width:1900px;
+  min-height:100vh;
+  margin:auto;
+  padding:14px;
+}
+
+.hidden {
+  display:none!important;
+}
+
+.menu {
+  min-height:92vh;
+  min-height:92dvh;
+  display:grid;
+  place-items:center;
+}
+
+.menuin {
+  max-width:1100px;
+}
+
+.kicker {
+  color:var(--cyan);
+  font-weight:900;
+  letter-spacing:.2em;
+}
+
+.menu h1 {
+  font-size:clamp(3rem,8vw,6rem);
+  line-height:.95;
+  margin:14px 0;
+}
+
+.muted {
+  color:var(--muted);
+}
+
+.settings {
+  margin:16px 0 14px;
+  padding:18px;
+  border:1px solid #ffffff18;
+  background:#ffffff08;
+  border-radius:22px;
+}
+
+.difficulty {
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+}
+
+.difficulty input {
+  position:absolute;
+  opacity:0;
+}
+
+.difficulty label {
+  padding:11px;
+  text-align:center;
+  border:1px solid #ffffff18;
+  border-radius:12px;
+  background:#ffffff08;
+  cursor:pointer;
+  font-weight:800;
+}
+
+.difficulty label small {
+  display:block;
+  color:var(--muted);
+}
+
+.difficulty input:checked+label {
+  border-color:var(--cyan);
+  background:#22d3ee20;
+  color:var(--cyan);
+}
+
+.modes {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:14px;
+}
+
+.mode,.answer,.card {
+  border:1px solid #ffffff18;
+  background:#ffffff0b;
+  border-radius:24px;
+  color:#fff;
+}
+
+.mode {
+  width:100%;
+  padding:25px;
+  text-align:left;
+  cursor:pointer;
+}
+
+.mode:hover,.answer:hover {
+  border-color:var(--cyan);
+  background:#22d3ee12;
+}
+
+.mode b {
+  display:block;
+  font-size:1.45rem;
+  margin:14px 0 5px;
+}
+
+.option {
+  display:flex;
+  gap:8px;
+  margin:10px 12px;
+  color:#cbd5e1;
+  font-weight:700;
+}
+
+.option input {
+  width:17px;
+  accent-color:var(--cyan);
+}
+
+.gamegrid {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 230px;
+  gap:12px;
+}
+
+.head {
+  display:flex;
+  justify-content:space-between;
+  align-items:end;
+  gap:15px;
+  margin-bottom:12px;
+}
+
+.head h1 {
+  margin:5px 0 0;
+  font-size:clamp(1.8rem,4vw,3.3rem);
+}
+
+.questionActions {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-top:12px;
+}
+
+.selectionProgress {
+  min-width:120px;
+  color:#cbd5e1;
+  font-weight:800;
+}
+
+.confirmSelection {
+  border:1px solid #22d3ee55;
+  border-radius:13px;
+  padding:11px 18px;
+  background:#22d3ee1c;
+  color:#67e8f9;
+  font-weight:950;
+  cursor:pointer;
+  transition:.16s;
+}
+
+.confirmSelection:not(:disabled) {
+  background:#22d3ee;
+  color:#06202a;
+  box-shadow:0 0 22px #22d3ee66;
+  transform:translateY(-1px);
+}
+
+.confirmSelection:disabled {
+  opacity:.38;
+  cursor:not-allowed;
+}
+
+.timerTrack.penalty {
+  animation:timerPenalty .48s ease;
+  background:#5f0714;
+}
+
+.penaltyBurst {
+  color:#991b1b!important;
+  text-shadow:0 0 14px #ef4444,0 4px 10px #000!important;
+}
+
+.selectionFull {
+  color:#c084fc!important;
+}
+
+.stats {
+  display:flex;
+  gap:8px;
+}
+
+.stat {
+  min-width:88px;
+  padding:10px 12px;
+  border:1px solid #ffffff18;
+  background:#ffffff0b;
+  border-radius:16px;
+}
+
+.stat small {
+  display:block;
+  color:var(--muted);
+}
+
+.stat b {
+  font-size:1.5rem;
+  color:#57f287;
+}
+
+.timerTrack {
+  height:11px;
+  background:#ffffff12;
+  border-radius:12px;
+  overflow:hidden;
+  margin-bottom:10px;
+}
+
+.timerBar {
+  height:100%;
+  transform-origin:left;
+}
+
+.play {
+  position:relative;
+  padding:6px;
+  min-height:900px;
+}
+
+.flagbox {
+  height:620px;
+  display:grid;
+  place-items:center;
+}
+
+.flagbox img {
+  width:min(650px,100%);
+  height:360px;
+  object-fit:contain;
+  background:#fff;
+  padding:12px;
+  border-radius:18px;
+  transition:opacity .18s;
+}
+
+.flagbox img.loading,.hoverFlag img.loading {
+  opacity:.35;
+  filter:saturate(.35);
+}
+
+.answers {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+.answer {
+  min-height:65px;
+  padding:15px;
+  text-align:left;
+  font-weight:800;
+}
+
+.mapWrap {
+  position:relative;
+  width:100%;
+  height:clamp(790px,82vh,940px);
+}
+
+.map {
+  position:absolute;
+  inset:0;
+  background:#071a32;
+  border-radius:18px;
+  overflow:hidden;
+}
+
+.mapControls {
+  position:absolute;
+  left:16px;
+  top:16px;
+  z-index:8;
+  display:grid;
+  gap:7px;
+  pointer-events:auto;
+}
+
+.mapControl {
+  width:43px;
+  height:43px;
+  border:1px solid #ffffff35;
+  border-radius:12px;
+  background:#061324e6;
+  color:#e6fbff;
+  font-size:1.35rem;
+  font-weight:900;
+  cursor:pointer;
+  box-shadow:0 8px 24px #0007;
+  backdrop-filter:blur(10px);
+  transition:.15s;
+}
+
+.mapControl:hover {
+  border-color:var(--cyan);
+  color:var(--cyan);
+  transform:translateY(-1px);
+}
+
+.mapControl:active {
+  transform:scale(.94);
+}
+
+.mapControl.reset {
+  font-size:1rem;
+}
+
+.mapHint {
+  position:absolute;
+  z-index:7;
+  left:50%;
+  bottom:12px;
+  transform:translateX(-50%);
+  padding:7px 12px;
+  border-radius:10px;
+  background:#061324c7;
+  color:#cbd5e1;
+  font-size:.78rem;
+  pointer-events:none;
+  opacity:.82;
+  white-space:nowrap;
+}
+
+.hoverFlag {
+  position:absolute;
+  right:16px;
+  top:16px;
+  z-index:5;
+  width:155px;
+  padding:9px;
+  border:1px solid #ffffff45;
+  border-radius:15px;
+  background:#061324dd;
+  pointer-events:none;
+  opacity:0;
+  transition:.18s;
+}
+
+.hoverFlag.show {
+  opacity:1;
+}
+
+.hoverFlag img {
+  width:100%;
+  height:85px;
+  object-fit:contain;
+  background:#fff;
+  border-radius:9px;
+}
+
+.hoverFlag span {
+  display:block;
+  text-align:center;
+  font-weight:800;
+}
+
+.reaction,.revealNotice {
+  position:absolute;
+  z-index:15;
+  left:50%;
+  pointer-events:none;
+  font-weight:1000;
+  text-align:center;
+  text-shadow:0 5px 25px currentColor;
+}
+
+.reaction {
+  top:20%;
+  font-size:clamp(2rem,6vw,4.5rem);
+  opacity:0;
+}
+
+.reaction.show {
+  animation:pop 1s ease;
+}
+
+.answerArrowText {
+  font-weight:1000;
+  filter:drop-shadow(0 0 3px #fff) drop-shadow(0 0 12px #ff1744) drop-shadow(0 7px 12px #000);
+  pointer-events:none;
+}
+
+.revealNotice {
+  top:18px;
+  transform:translateX(-50%);
+  padding:11px 18px;
+  border-radius:14px;
+  background:#020617d9;
+  color:#fde68a;
+  border:1px solid #fde68a66;
+}
+
+.side {
+  padding:14px;
+  height:max-content;
+}
+
+.row {
+  display:flex;
+  gap:7px;
+  padding:9px;
+  background:#ffffff09;
+  border-radius:11px;
+  margin-top:7px;
+}
+
+.player {
+  flex:1;
+}
+
+.rank {
+  color:#fbbf24;
+}
+
+.pts {
+  color:var(--cyan);
+}
+
+.modal {
+  position:fixed;
+  inset:0;
+  background:#020617e8;
+  display:grid;
+  place-items:center;
+  padding:15px;
+  z-index:30;
+}
+
+.modalin {
+  width:min(430px,100%);
+  background:#10233c;
+  border:1px solid #ffffff18;
+  border-radius:26px;
+  padding:27px;
+}
+
+.save {
+  display:flex;
+  gap:8px;
+}
+
+.save input {
+  flex:1;
+  min-width:0;
+  padding:13px;
+  border-radius:11px;
+  background:#ffffff0b;
+  color:#fff;
+  border:1px solid #ffffff22;
+}
+
+.btn {
+  padding:13px;
+  border:0;
+  border-radius:11px;
+  font-weight:900;
+}
+
+.primary {
+  background:var(--cyan);
+}
+
+.again {
+  width:100%;
+  margin-top:10px;
+}
+
+.studyCard {
+  position:fixed;
+  inset:0;
+  z-index:45;
+  display:grid;
+  place-items:center;
+  padding:18px;
+  background:#020617e8;
+}
+
+.studyInner {
+  width:min(620px,100%);
+  border:1px solid #22d3ee55;
+  border-radius:24px;
+  background:linear-gradient(145deg,#102b47,#0b1d34);
+  box-shadow:0 24px 80px #000c,0 0 34px #22d3ee22;
+  padding:24px;
+}
+
+.studyFlag {
+  display:block;
+  width:min(330px,80%);
+  height:175px;
+  object-fit:contain;
+  margin:0 auto 18px;
+  padding:8px;
+  border-radius:14px;
+  background:#fff;
+}
+
+.studyInner h2 {
+  margin:0 0 10px;
+  font-size:1.8rem;
+}
+
+.studyInner p {
+  color:#dbeafe;
+  line-height:1.55;
+  margin:0 0 20px;
+}
+
+.studyInner p.loading {
+  color:#94a3b8;
+  font-style:italic;
+}
+
+.studyActions {
+  display:flex;
+  gap:10px;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+}
+
+.studyLink {
+  text-decoration:none;
+  background:#ffffff12;
+  color:#67e8f9;
+  border:1px solid #22d3ee55;
+}
+
+.studyContinue {
+  background:var(--cyan);
+  color:#06202a;
+}
+
+@keyframes timerPenalty {
+  0%,100% {
+    transform:translateX(0);
+  }
+  20% {
+    transform:translateX(-13px);
+  }
+  40% {
+    transform:translateX(11px);
+  }
+  60% {
+    transform:translateX(-8px);
+  }
+  80% {
+    transform:translateX(5px);
+  }
+}
+
+@keyframes pop {
+  0% {
+    opacity:0;
+    transform:translate(-50%,20px) scale(.5);
+  }
+  25% {
+    opacity:1;
+    transform:translate(-50%,0) scale(1.15);
+  }
+  100% {
+    opacity:0;
+    transform:translate(-50%,-30px);
+  }
+}
+
+@media(max-width:1200px) {
+  .gamegrid {
+    grid-template-columns:1fr;
+  }
+  .side {
+    order:2;
+  }
+  .mapWrap {
+    height:clamp(700px,78vh,840px);
+  }
+}
+
+@media(max-width:760px) {
+  .mapWrap {
+    height:650px;
+  }
+  .play {
+    min-height:680px;
+  }
+}
+
+@media(max-width:620px) {
+  .difficulty,.answers {
+    grid-template-columns:1fr 1fr;
+  }
+  .mapWrap {
+    height:590px;
+  }
+  .wrap {
+    padding:8px;
+  }
+  .play {
+    padding:4px;
+    min-height:610px;
+  }
+}
+
+@media(max-width:900px) {
+  .modes {
+    grid-template-columns:1fr;
+  }
+}
+
+@media(max-width:760px) {
+  .flagbox {
+    height:auto;
+    min-height:300px;
+  }
+  .flagbox img {
+    height:auto;
+    max-height:240px;
+  }
+  .play {
+    min-height:0;
+  }
+}
+
+button:focus-visible,.difficulty input:focus-visible+label {
+  outline:2px solid var(--cyan);
+  outline-offset:2px;
+}
+
+@media(prefers-reduced-motion:reduce) {
+  * {
+    animation-duration:.01ms!important;
+    transition-duration:.01ms!important;
+  }
+}
+
+.option.refreshOption {
+  margin: 0 0 6px;
+  font-size: .9rem;
+}
