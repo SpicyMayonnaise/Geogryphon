@@ -164,6 +164,7 @@ h1,h2,.stat b,.mode b {
 /* ---------- Menu ---------- */
 
 .menu {
+  position:relative;
   min-height:92vh;
   min-height:92dvh;
   display:grid;
@@ -556,6 +557,19 @@ h1,h2,.stat b,.mode b {
   font-size:var(--fs-18);
 }
 
+/* Mute toggle: a map-control button in the menu corner and beside the game stats */
+.muteBtn {
+  flex:none;
+  align-self:center;
+  font-size:var(--fs-18);
+}
+
+.menuMute {
+  position:absolute;
+  top:var(--s-16);
+  right:var(--s-16);
+}
+
 .mapHint {
   position:absolute;
   z-index:7;
@@ -866,6 +880,13 @@ h1,h2,.stat b,.mode b {
   }
   .stat b {
     font-size:var(--fs-18);
+  }
+  /* Same height as the back button, so the stats row does not grow into the mode chip below it. */
+  .muteBtn {
+    width:28px;
+    height:28px;
+    border-radius:var(--r-8);
+    font-size:var(--fs-14);
   }
   /* Own line under the back button, so it never slides under the stats in the top-right corner. */
   .head .kicker {
