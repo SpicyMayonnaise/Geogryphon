@@ -7,10 +7,31 @@ no framework, no bundler, no server. The only external code is amCharts (map) lo
 ## Running and building
 
 - Run: open `index.html` in a browser. Map and trivia modes need internet for amCharts; flags need it for images.
+  Fonts (Fredoka, Nunito) come from Google Fonts; offline the game falls back to `system-ui`.
+- Preview server: `node .claude/serve.js` serves the folder on http://localhost:8765 (`.claude/launch.json`).
 - One-file build: `python3 build_single.py` writes `geogryphon_single.html`. It is generated, so never edit it by hand.
-- There is no test runner in this repo yet. After editing JS, run `node --check <file>` on each changed file,
-  then play each mode once in the browser. For logic changes, test with a stubbed DOM and stubbed `MapView`
+  Python is not installed on the main dev machine, so `geogryphon_single.html` is stale (pre-V14) until rebuilt.
+- There is no test runner. Checks are plain Node scripts in `tools/` (exit 1 on failure):
+  - after CSS edits: `node tools/check-tokens.js` (no hardcoded design values) and `node tools/contrast.js` (WCAG AA)
+  - after JS edits: `node --check <file>`, `node tools/test-tokens-js.js`, `node tools/test-answer-states.js`
+  Then play each mode once in the browser. For logic changes, test with a stubbed DOM and stubbed `MapView`
   rather than loading amCharts.
+
+## Design system ("Arcade", V14)
+
+- Tokens live only in `css/style.css` `:root`: colours, `--font-*`, `--fs-*`, `--fw-*`, `--r-*`, `--s-*`, `--press`.
+  Everything else in the CSS references them; `tools/check-tokens.js` enforces it (no hex/rgb/hsl, no raw
+  radius, font size, weight or padding/margin/gap outside `:root`, no `font` shorthand).
+- JS never hardcodes colours: use `token('name')` (CSS value) or `tokenHex('name')` (number, for amCharts) from
+  `js/util.js`. `MapView` reads its palette once when the chart is built.
+- Components and their CSS: Button `.btn` + `.btn-primary|-secondary|-ghost` (one primary per view), Answer tile
+  `.answer` + `.is-correct|.is-wrong`, Chip `.head .kicker`, Stat `.stat`, Segment `.difficulty label`,
+  Card `.card/.settings/.mode/.modalin/.studyInner`, Map control `.mapControl`. Pressable things have a 4px bottom
+  edge (`box-shadow: 0 4px 0 var(--edge)`) that squashes to 2px on press.
+- Figma source of truth: "Geogryphon Arcade" https://www.figma.com/design/Ia8PpWANBjPKIOeq7qjSBe (variables
+  collection `Arcade`, text styles, components, reference screens). Change a token in Figma and CSS together.
+- Spec and plan: `docs/superpowers/specs/2026-10-13-arcade-design-system-design.md`,
+  `docs/superpowers/plans/2026-10-13-arcade-design-system.md`.
 
 ## Layout
 
@@ -75,5 +96,6 @@ Rules to keep:
 
 - amCharts CDN scripts are unpinned (no version or integrity hash).
 - Flag distractors are intentionally random (smarter look-alike choices were declined).
-- Unverified: the map's `pointerover` handler resets the fill, so the cyan hover colour may never show.
+- Unverified: the map's `pointerover` handler resets the fill, so the hover colour (`--text-2` lavender) may never show.
+- The menu layout itself (critique priority 3: mode cards as the main action, options inside cards) is not done yet.
 - "Show names on hover" is on by default, which makes "Find X" easy. Left as a design choice.
