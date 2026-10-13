@@ -35,7 +35,7 @@ lines.forEach((line, i) => {
 });
 
 // ---- JS (game code only; data files are excluded) ----
-for (const f of ['util.js', 'game.js', 'map.js', 'main.js', 'scores.js']) {
+for (const f of ['util.js', 'sound.js', 'game.js', 'map.js', 'main.js', 'scores.js']) {
   fs.readFileSync(path.join(root, 'js', f), 'utf8').split('\n').forEach((line, i) => {
     const code = line.replace(/\/\/.*$/, '');
     if (/['"`]#[0-9a-fA-F]{3,8}['"`]|0x[0-9a-fA-F]{6}\b|hsla?\(/.test(code)) problems.push(`js/${f}:${i + 1} raw colour: ${code.trim()}`);
