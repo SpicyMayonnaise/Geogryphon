@@ -56,7 +56,8 @@ document.addEventListener('keydown', e => {
 /* ---------- sound ---------- */
 const SOUND_TARGETS = 'button, .difficulty label, .answer, .mapControl';
 // Browsers only allow audio after a user gesture; every gesture also wakes a suspended context.
-['pointerdown', 'keydown'].forEach(type => document.addEventListener(type, Sound.unlock, true));
+// Touch only counts on release, so pointerup/touchend/click are listened to as well.
+['pointerdown', 'pointerup', 'touchend', 'click', 'keydown'].forEach(type => document.addEventListener(type, Sound.unlock, true));
 document.addEventListener('pointerover', e => {
   if (e.pointerType === 'touch') return; // a tap would otherwise play hover and click together
   const el = e.target.closest?.(SOUND_TARGETS);

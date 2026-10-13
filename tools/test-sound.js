@@ -8,7 +8,7 @@ class Param { setValueAtTime() {} exponentialRampToValueAtTime() {} }
 class FakeNode {
   constructor() { this.gain = new Param(); this.frequency = new Param(); this.stops = []; }
   connect() {}
-  start() {}
+  start(t) { this.startAt = t; }
   stop(t) { this.stops.push(t); }
 }
 class FakeAudio {
@@ -135,6 +135,35 @@ for (const audio of [null, class { constructor() { throw new Error('blocked'); }
   assert.strictEqual(Sound.tick(1), false);
   Sound.resetTick();
   Sound.setMuted(true);
+}
+
+// A suspended context (e.g. a phone's first touch) plays nothing, so nothing queues up to burst out later.
+{
+  class Suspended extends FakeAudio { constructor() { super(); this.state = 'suspended'; } }
+  const { Sound } = load({ audio: Suspended });
+  Sound.unlock();
+  assert.strictEqual(Sound.play('click'), false, 'suspended context does not queue sounds');
+  assert.strictEqual(FakeAudio.last.sources.length, 0);
+  FakeAudio.last.state = 'running';
+  assert.strictEqual(Sound.play('click'), true, 'plays once the context runs');
+}
+
+// resetTick also cuts a final-second tock still waiting to play (round ended, menu, restart).
+{
+  const { Sound } = load();
+  Sound.unlock();
+  Sound.tick(1);
+  const tock = [...FakeAudio.last.sources];
+  Sound.resetTick();
+  assert.ok(tock.every(s => s.stops.length === 2), 'pending tick and tock are stopped');
+}
+
+// play() can start a sound later, so two sounds can follow each other.
+{
+  const { Sound } = load();
+  Sound.unlock();
+  Sound.play('timesUp', 0, 0.5);
+  assert.ok(FakeAudio.last.sources.every(s => s.startAt >= 0.5), 'delayed sound starts after the delay');
 }
 
 console.log('sound OK');

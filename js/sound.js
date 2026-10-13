@@ -60,10 +60,10 @@ const SOUND_RECIPES = {
 const Sound = (() => {
   let ctx = null, master = null, noise = null, broken = false;
   let muted = LS.getItem(SOUND_MUTE_KEY) === '1';
-  let lastHover = -Infinity, lastTick = null, wrongVoices = [];
+  let lastHover = -Infinity, lastTick = null, wrongVoices = [], tickVoices = [];
 
-  // Runs on every pointerdown/keydown: creates the audio context on the first gesture and wakes it
-  // again if the browser suspended it.
+  // Runs on every user gesture: creates the audio context on the first one and wakes it again if the
+  // browser suspended (or, on iOS, interrupted) it.
   function unlock() {
     if (broken) return;
     try {
@@ -75,7 +75,7 @@ const Sound = (() => {
         master.gain.value = 0.6;
         master.connect(ctx.destination);
       }
-      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+      if (ctx.state !== 'running') ctx.resume().catch(() => {});
     } catch {
       broken = true;
       ctx = null;
@@ -117,8 +117,10 @@ const Sound = (() => {
 
   const silence = voices => voices.forEach(v => { try { v.stop(); } catch { /* already stopped */ } });
 
-  function play(name, intensity = 0) {
-    if (muted || broken || !ctx || !SOUND_RECIPES[name]) return false;
+  // delay (s) starts the sound later, so one sound can follow another.
+  function play(name, intensity = 0, delay = 0) {
+    // A context that is not running yet (e.g. a phone's first touch) would only queue a burst for later.
+    if (muted || broken || !ctx || ctx.state !== 'running' || !SOUND_RECIPES[name]) return false;
     if (name === 'hover') {
       const now = performance.now();
       if (now - lastHover < HOVER_GAP_MS) return false;
@@ -126,9 +128,10 @@ const Sound = (() => {
     }
     try {
       if (name === 'wrong') silence(wrongVoices); // repeated misses never stack
-      const at = ctx.currentTime + 0.01;
+      const at = ctx.currentTime + 0.01 + Math.max(0, Number(delay) || 0);
       const voices = SOUND_RECIPES[name](clamp01(intensity)).map(n => voice(n, at));
       if (name === 'wrong') wrongVoices = voices;
+      if (name === 'tick' || name === 'tickFinal') tickVoices = voices;
       return true;
     } catch {
       broken = true;
@@ -147,7 +150,12 @@ const Sound = (() => {
     unlock,
     play,
     tick,
-    resetTick() { lastTick = null; },
+    // Re-arms the ticks and cuts a final-second tock that is still waiting to play.
+    resetTick() {
+      lastTick = null;
+      silence(tickVoices);
+      tickVoices = [];
+    },
     isMuted: () => muted,
     setMuted(on) {
       muted = !!on;

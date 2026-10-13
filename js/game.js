@@ -87,7 +87,7 @@ const Clock = (() => {
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(tick);
     },
-    stop() { running = false; pausedAt = 0; cancelAnimationFrame(raf); },
+    stop() { running = false; pausedAt = 0; cancelAnimationFrame(raf); Sound.resetTick(); },
     pause() { if (running && !pausedAt) { pausedAt = now(); cancelAnimationFrame(raf); } },
     resume() { if (running && pausedAt) { startAt += now() - pausedAt; pausedAt = 0; raf = requestAnimationFrame(tick); } },
     ratio,
@@ -168,7 +168,7 @@ function applyPenalty() {
   showReaction(`Wrong! −${seconds} second${seconds === 1 ? '' : 's'}`);
   clearSelections();
   Sound.play('wrong', left <= 0 ? 1 : 1 - r);
-  if (left <= 0) { Sound.play('timesUp'); lose('The time penalty ran out the clock!'); }
+  if (left <= 0) { Sound.play('timesUp', 0, 0.5); lose('The time penalty ran out the clock!'); } // buzzer after the wrong sound
 }
 
 async function lose(reason, pickedCode = null) {

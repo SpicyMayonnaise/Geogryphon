@@ -19,7 +19,7 @@ function setup(over = {}) {
   const ctx = {
     played, state: 'asking', mode: 'map', runId: 1, score: 0, maxTime: 10, scoreSaved: false,
     target: { code: 'KW' }, questionSpec: { required: 2 }, selectedIds: new Set(),
-    Sound: { play: (name, i) => played.push(i === undefined ? [name] : [name, i]) },
+    Sound: { play: (name, ...rest) => played.push([name, ...rest]) },
     Clock: { r: 0.8, ratio() { return this.r; }, stop() {}, penalize: () => 5, start(s, cb) { ctx.expire = cb; } },
     setState: s => { ctx.state = s; return true; },
     stale: rid => rid !== ctx.runId,
@@ -53,7 +53,7 @@ const sounds = c => c.played.map(p => p[0]);
   c.Clock.r = 0.2;
   c.Clock.penalize = () => 0;
   c.applyPenalty();
-  assert.deepStrictEqual(c.played, [['wrong', 1], ['timesUp']]);
+  assert.deepStrictEqual(c.played, [['wrong', 1], ['timesUp', 0, 0.5]], 'buzzer follows the wrong sound');
   assert.ok(c.lost, 'run is lost');
 }
 
@@ -127,6 +127,8 @@ const sounds = c => c.played.map(p => p[0]);
   ctx.Clock.start(10, () => calls.push('expired'));
   [5000, 7600, 7700, 8100, 9100, 10000].forEach(step);
   assert.deepStrictEqual(calls, ['reset', 3, 3, 2, 1, 'expired']);
+  ctx.Clock.stop();
+  assert.strictEqual(calls.at(-1), 'reset', 'stopping the clock cuts any pending tick');
 }
 
 console.log('sound wiring OK');
