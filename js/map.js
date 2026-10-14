@@ -105,13 +105,23 @@ const RevealCircles = (() => {
   return { start, stop };
 })();
 
-// Countries whose shape lies under a neighbour's shape (Italy has no hole for Vatican City), so they are
-// raised to the top layer once the map is built; otherwise they cannot be seen or clicked.
-const COVERED_COUNTRIES = ['VA', 'MC'];
-// Countries too small to tap even at full zoom (Vatican City is ~1px). Their real outline is scaled up around
-// its own centre until its longest side spans ENLARGED_SPAN_DEG (tappable at max zoom). Exaggerated, not moved.
+// Countries too small to tap even at full zoom (Vatican City is ~1px, and Italy's shape has no hole for it).
+// Their real outline is scaled up around its own centre until its longest side spans the size below, and they
+// are raised to the top layer so a neighbour never covers them. Exaggerated, not moved; no markers.
+// Desktop: only Vatican City and Monaco. Phones (fingers are bigger): every country smaller than the phone size.
 const ENLARGED_COUNTRIES = ['VA', 'MC'];
 const ENLARGED_SPAN_DEG = 0.2;
+const PHONE_ENLARGED_SPAN_DEG = 0.35;
+const MAX_ZOOM = 64, PHONE_MAX_ZOOM = 128;
+const isPhone = () => matchMedia('(max-width: 620px), (pointer: coarse) and (max-width: 900px)').matches;
+
+// Longest side of a GeoJSON geometry's bounding box, in degrees.
+function geometrySpan(geometry) {
+  const polys = geometry.type === 'Polygon' ? [geometry.coordinates] : geometry.coordinates;
+  const pts = polys.flat(2);
+  const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+  return Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
+}
 
 // A copy of a GeoJSON geometry scaled around its bounding-box centre so its longest side is spanDeg degrees.
 function enlargeGeometry(geometry, spanDeg) {
@@ -125,13 +135,19 @@ function enlargeGeometry(geometry, spanDeg) {
   const scaled = polys.map(poly => poly.map(ring => ring.map(([x, y]) => [cx + (x - cx) * k, cy + (y - cy) * k])));
   return { type: geometry.type, coordinates: geometry.type === 'Polygon' ? scaled[0] : scaled };
 }
-function mapGeoJSON() {
-  const geo = am5geodata_worldLow;
-  return {
-    ...geo,
-    features: geo.features.map(f => ENLARGED_COUNTRIES.includes(f.id)
-      ? { ...f, geometry: enlargeGeometry(f.geometry, ENLARGED_SPAN_DEG) } : f)
-  };
+// The map's GeoJSON with tiny countries enlarged. Returns the ids it enlarged, to raise them to the top layer.
+function mapGeoJSON(phone) {
+  const geo = am5geodata_worldLow, span = phone ? PHONE_ENLARGED_SPAN_DEG : ENLARGED_SPAN_DEG;
+  const grow = f => phone
+    ? countryByCode(f.id)?.playable && geometrySpan(f.geometry) < span
+    : ENLARGED_COUNTRIES.includes(f.id);
+  const enlarged = [];
+  const features = geo.features.map(f => {
+    if (!grow(f)) return f;
+    enlarged.push(f.id);
+    return { ...f, geometry: enlargeGeometry(f.geometry, span) };
+  });
+  return { geoJSON: { ...geo, features }, enlarged };
 }
 
 const MapView = (() => {
@@ -146,7 +162,7 @@ const MapView = (() => {
   // One mouse-wheel notch (100px) zooms one ZOOM_STEP; smaller touchpad scrolls zoom proportionally less.
   const WHEEL_ZOOM_PER_PX = Math.log(ZOOM_STEP) / 100;
 
-  let root = null, chart = null, series = null;
+  let root = null, chart = null, series = null, onTop = [];
   let fittedSize = '';
   let wheelTarget = 0, lastWheel = 0, lastPageScroll = 0;
   let flashes = [];
@@ -315,7 +331,7 @@ const MapView = (() => {
     // A non-cancelable wheel event belongs to a page scroll that is still coasting onto the map. Leave it be.
     if (!e.cancelable || performance.now() - lastPageScroll < 200) return;
     const level = chart.get('zoomLevel', 1);
-    const min = chart.get('minZoomLevel', 1), max = chart.get('maxZoomLevel', 64);
+    const min = chart.get('minZoomLevel', 1), max = chart.get('maxZoomLevel', MAX_ZOOM);
     let dy = e.deltaY;
     if (e.deltaMode === 1) dy *= 33;                                  // lines
     else if (e.deltaMode === 2) dy *= e.currentTarget.clientHeight;   // pages
@@ -346,7 +362,7 @@ const MapView = (() => {
     if (!KEEP_AMCHARTS_LOGO) root._logo?.dispose();
     chart = root.container.children.push(am5map.MapChart.new(root, {
       panX: 'translateX', panY: 'translateY', wheelX: 'none', wheelY: 'none', pinchZoom: true,
-      zoomStep: ZOOM_STEP, minZoomLevel: 1, maxZoomLevel: 64, projection: am5map.geoNaturalEarth1()
+      zoomStep: ZOOM_STEP, minZoomLevel: 1, maxZoomLevel: isPhone() ? PHONE_MAX_ZOOM : MAX_ZOOM, projection: am5map.geoNaturalEarth1()
     }));
     $('mapArea').addEventListener('wheel', onWheel, { passive: false });
     window.addEventListener('scroll', () => { lastPageScroll = performance.now(); }, { passive: true });
@@ -354,7 +370,9 @@ const MapView = (() => {
     new ResizeObserver(() => {
       if (refitIfResized()) root.events.once('frameended', () => resetView(true));
     }).observe($('mapArea'));
-    series = chart.series.push(am5map.MapPolygonSeries.new(root, { geoJSON: mapGeoJSON(), exclude: ['AQ'] }));
+    const { geoJSON, enlarged } = mapGeoJSON(isPhone());
+    onTop = enlarged;
+    series = chart.series.push(am5map.MapPolygonSeries.new(root, { geoJSON, exclude: ['AQ'] }));
 
     series.events.on('datavalidated', () => {
       const ids = new Set();
@@ -363,7 +381,7 @@ const MapView = (() => {
         if (id && countryByCode(id)) ids.add(id);
         else p.setAll({ tooltipText: '', cursorOverStyle: 'default' }); // not in the game: plain land
       });
-      COVERED_COUNTRIES.forEach(id => polygonFor(id)?.toFront());
+      onTop.forEach(id => polygonFor(id)?.toFront());
       hooks.onData(ids);
       if (resolveReady) { resolveReady(); resolveReady = null; }
     });

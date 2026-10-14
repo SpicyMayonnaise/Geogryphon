@@ -74,9 +74,10 @@ Rules to keep:
   `cleanup()` stops the flash animations and empties the layer. There is no arrow any more (removed on purpose).
 - No reduced-motion handling for these animations until the game has a settings menu (user decision).
 
-- Covered and tiny countries: Italy's shape has no hole for Vatican City, so `COVERED_COUNTRIES` (VA, MC) are raised
-  to the top layer. `ENLARGED_COUNTRIES` (VA, MC) have their real outline scaled up around its centre to
-  `ENLARGED_SPAN_DEG` (0.2°) so they can be tapped at max zoom (64). No markers or circles (user rejected them).
+- Tiny countries: Italy's shape has no hole for Vatican City. Tiny countries get their real outline scaled up
+  around its centre and are raised to the top layer (`mapGeoJSON`, `onTop`). Desktop: VA and MC to 0.2°, max
+  zoom 64. Phones (`isPhone()`): every playable country under 0.35° to 0.35°, max zoom 128 (~40px at max zoom).
+  No markers or circles (user rejected them).
 - Portrait maps (phones) start zoomed so the inhabited world fills the height (`homeZoom`, max 4x).
 - The amCharts logo stays visible (`KEEP_AMCHARTS_LOGO = true`): the free licence requires it.
 - amCharts' own wheel zoom is off (`wheelY: 'none'`). `onWheel` zooms in proportion to the scroll distance
