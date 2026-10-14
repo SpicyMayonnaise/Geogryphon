@@ -4,7 +4,7 @@
    Built once, the first time the Archive opens; flags load as their cards scroll into view. */
 
 const Archive = (() => {
-  let built = false, continent = '', observer = null;
+  let builtLang = null, continent = '', observer = null;
   const cards = []; // { el, country, text } where text is the lowercased search haystack
 
   function formatPopulation(p) {
@@ -33,7 +33,7 @@ const Archive = (() => {
     const card = pop.parentElement;
     flag.src = card.querySelector('.archiveFace img').src;
     const name = document.createElement('h3');
-    name.textContent = c.name;
+    name.textContent = countryName(c);
     const rows = [
       infoRow('archive.capital', c.capital),
       infoRow('archive.continent', c.continent),
@@ -61,13 +61,13 @@ const Archive = (() => {
     img.className = 'loading';
     const name = document.createElement('span');
     name.className = 'archiveName';
-    name.textContent = c.name;
+    name.textContent = countryName(c);
     face.append(img, name);
     const pop = document.createElement('span');
     pop.className = 'archivePop';
     pop.setAttribute('aria-hidden', 'true');
     el.append(face, pop);
-    el.setAttribute('aria-label', c.name);
+    el.setAttribute('aria-label', countryName(c));
     return el;
   }
 
@@ -122,32 +122,35 @@ const Archive = (() => {
     }));
   }
 
+  // Built per language: names and their sort order change with it.
   function build() {
-    built = true;
+    builtLang = currentLang;
+    cards.length = 0;
+    observer?.disconnect();
     observer = new IntersectionObserver(entries => entries.forEach(e => {
       if (!e.isIntersecting) return;
       observer.unobserve(e.target);
       const c = cards.find(x => x.el === e.target)?.country;
       if (c) loadFlag(e.target.querySelector('.archiveFace img'), c.code, { alt: '', timeout: 2500 });
     }), { rootMargin: '300px' });
-    const sorted = [...DATA].sort((a, b) => a.name.localeCompare(b.name));
+    const sorted = [...DATA].sort((a, b) => countryName(a).localeCompare(countryName(b), currentLang));
     for (const c of sorted) {
       const el = makeCard(c);
-      cards.push({ el, country: c, text: [c.name, c.capital, c.continent, ...c.languages].join(' ').toLowerCase() });
+      cards.push({ el, country: c, text: [c.name, countryName(c), c.capital, c.continent, ...c.languages].join(' ').toLowerCase() });
       el.addEventListener('click', () => toggle(el));
       el.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') place(el); });
       el.addEventListener('focus', () => place(el));
       observer.observe(el);
     }
     $('archiveGrid').replaceChildren(...cards.map(c => c.el));
-    $('archiveSearch').addEventListener('input', () => { closeAll(); filter(); });
-    // A tap anywhere outside a card closes the open one.
-    document.addEventListener('click', e => { if (!e.target.closest?.('.archiveCard')) closeAll(); });
   }
+  $('archiveSearch').addEventListener('input', () => { closeAll(); filter(); });
+  // A tap anywhere outside a card closes the open one.
+  document.addEventListener('click', e => { if (!e.target.closest?.('.archiveCard')) closeAll(); });
 
   return {
     open() {
-      if (!built) build();
+      if (builtLang !== currentLang) build();
       renderFilters();
       filter();
       hide('menu'); show('archive');

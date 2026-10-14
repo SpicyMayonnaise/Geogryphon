@@ -9,7 +9,7 @@
 // Every language the settings menu offers. `ready: false` shows it greyed out as "Coming soon".
 const LANGUAGES = [
   { code: 'en', label: 'English', ready: true },
-  { code: 'he', label: 'עברית', ready: false }
+  { code: 'he', label: 'עברית', ready: true }
 ];
 const LANG_KEY = 'geogryphon.lang';
 const LANG_PACKS = {}; // filled by js/lang/*.js
@@ -27,6 +27,9 @@ function applyI18n(root = document) {
   root.querySelectorAll('[data-i18n-title]').forEach(el => { el.title = t(el.dataset.i18nTitle); });
   root.querySelectorAll('[data-i18n-aria]').forEach(el => { el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
 }
+
+// A country's display name in the current language (pack `countries` by ISO code), else the data's English name.
+const countryName = c => (c && (LANG_PACKS[currentLang]?.countries?.[c.code] ?? c.name)) || '';
 
 const languageReady = code => !!LANG_PACKS[code] && !!LANGUAGES.find(l => l.code === code)?.ready;
 

@@ -106,8 +106,11 @@ Rules to keep:
 - The settings window (⚙️) and the Archive (📚) open only from the menu corner, next to Mute.
 - Volume: `Sound.setVolume(0..1)` scales the master gain; stored in `LS` `geogryphon.volume`. Mute stays separate.
 - Language: all UI text goes through `t()`; static HTML uses `data-i18n`, `-ph`, `-title`, `-aria`. Never hardcode
-  UI text in JS or HTML. Hebrew is listed but `ready: false` (greyed "Coming soon") until `js/lang/he.js` exists;
-  packs set `meta.dir` (`rtl` for Hebrew). Country data (names, capitals, languages) is not translated.
+  UI text in JS or HTML. Packs: `js/lang/en.js`, `js/lang/he.js` (Hebrew, `meta.dir: 'rtl'`). Both must have the same
+  keys and placeholders. Country names: `countryName(c)` reads `LANG_PACKS.<lang>.countries[code]` (Hebrew has all
+  247); always use it for display, never `c.name`. Capitals, languages and continents stay English.
+- RTL: use `inset-inline-*` and `text-align:start`, not left/right. Exception: the leaderboard button stays physically
+  right so it never covers the amCharts logo (bottom-left). Mixed-direction text (answer tiles) uses `<bdi>`.
 - Colour blind: `html.cb` swaps `--good/--bad` to `--cb-good/--cb-bad` (blue/orange) and applies the SVG
   `#daltonize` filter (red-green, in `index.html`) to flag images. `MapView.refreshPalette()` and the clock
   re-read colours.

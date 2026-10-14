@@ -196,7 +196,7 @@ async function lose(reason, pickedCode = null) {
     await new Promise(resolve => later(resolve, FLAG_REVEAL_MS));
     if (stale(rid) || state !== 'revealing') return;
   } else {
-    const names = eligible.map(id => countryByCode(id)?.name).filter(Boolean);
+    const names = eligible.map(id => countryName(countryByCode(id))).filter(Boolean);
     const completed = await MapView.highlight(eligible, {
       duration: 5000,
       label: eligible.length > 1 ? t('game.eligible', { names: names.join(', ') }) : t('game.correctAnswer', { name: names[0] })
@@ -211,7 +211,7 @@ async function lose(reason, pickedCode = null) {
 function showGameOver(reason, countries) {
   if (!setState('over')) return;
   setText('final', score);
-  setText('correct', countries.map(c => c.name).join(', '));
+  setText('correct', countries.map(countryName).join(', '));
   setText('reason', reason);
   $('saveBtn').disabled = false;
   show('modal');
@@ -222,13 +222,13 @@ function openStudyCard(country, reason) {
   if (!setState('study')) return;
   const entry = flagStudyEntry(country);
   pendingLoss = { reason, country };
-  setText('studyTitle', t('study.title', { name: country.name }));
+  setText('studyTitle', t('study.title', { name: countryName(country) }));
   $('studySummary').classList.remove('loading');
   setText('studySummary', entry.summary);
   $('studyReadMore').href = entry.source;
-  $('studyReadMore').title = t('study.readMoreHint', { name: country.name });
+  $('studyReadMore').title = t('study.readMoreHint', { name: countryName(country) });
   $('studyReadMore').classList.toggle('hidden', !entry.source);
-  loadFlag($('studyFlag'), country.code, { alt: `${country.name} flag`, timeout: 2500 });
+  loadFlag($('studyFlag'), country.code, { alt: countryName(country), timeout: 2500 });
   show('studyCard');
 }
 function continueFromStudy() {
@@ -274,7 +274,9 @@ async function askNext(rid) {
       const b = document.createElement('button');
       b.className = 'answer';
       b.dataset.code = x.code;
-      b.textContent = `${i + 1}. ${x.name}`;
+      // Number and name are isolated so right-to-left text (Hebrew) keeps "1. Name" in order.
+      const bdi = text => { const e = document.createElement('bdi'); e.textContent = text; return e; };
+      b.append(bdi(`${i + 1}.`), ' ', bdi(countryName(x)));
       b.addEventListener('click', () => onFlagAnswer(x.code));
       return b;
     }));
@@ -292,7 +294,7 @@ async function askNext(rid) {
   $('answers').replaceChildren();
   if (mode === 'map') {
     target = pickTarget(mapPool());
-    questionSpec = { category: 'map', multi: false, required: 1, eligible: [target.code], text: t('game.find', { name: target.name }) };
+    questionSpec = { category: 'map', multi: false, required: 1, eligible: [target.code], text: t('game.find', { name: countryName(target) }) };
   } else {
     questionSpec = nextTriviaQuestion();
     target = countryByCode(questionSpec.eligible[0]);
@@ -376,11 +378,11 @@ async function startGame(m) {
   hide('menu'); show('game');
   const label = t(`mode.${m}`);
   const diffLabel = t(`diff.${difficulty}`);
-  setText('modeLabel', `${label.toUpperCase()} · ${diffLabel.toUpperCase()} · ${expertise.toUpperCase()}`);
+  setText('modeLabel', `${label.toUpperCase()} · ${diffLabel.toUpperCase()} · ${expertiseLabel().toUpperCase()}`);
   setText('boardTitle', t('game.boardTitle', { mode: label, difficulty: diffLabel, expertise: expertiseLabel() }));
   renderBoard();
 
-  if (m !== 'flag') { MapView.ensure(); MapView.setTooltips($('showNames').checked); }
+  if (m !== 'flag') { MapView.ensure(); MapView.renameCountries(); MapView.setTooltips($('showNames').checked); }
   if (m === 'flag') preloadFlags();
   if (m === 'map') { await MapView.waitReady(8000); if (stale(rid)) return; }
   if (m === 'trivia') {

@@ -350,8 +350,15 @@ const MapView = (() => {
     if (wheelTarget === level) return;
     chart.zoomToPoint(root.documentPointToRoot({ x: e.clientX, y: e.clientY }), wheelTarget, false, 120);
   }
+  // Tooltips show {displayName}: the country's name in the current language (set again each game start).
+  function renameCountries() {
+    series?.mapPolygons.each(p => {
+      const ctx = p.dataItem?.dataContext, c = countryByCode(idOf(p));
+      if (ctx) ctx.displayName = c ? countryName(c) : ctx.name;
+    });
+  }
   function setTooltips(on) {
-    series?.mapPolygons.template.set('tooltipText', on ? '{name}' : '');
+    series?.mapPolygons.template.set('tooltipText', on ? '{displayName}' : '');
   }
   function waitReady(timeoutMs = 8000) {
     return Promise.race([ready, new Promise(r => setTimeout(r, timeoutMs))]);
@@ -384,13 +391,14 @@ const MapView = (() => {
         else p.setAll({ tooltipText: '', cursorOverStyle: 'default' }); // not in the game: plain land
       });
       onTop.forEach(id => polygonFor(id)?.toFront());
+      renameCountries();
       hooks.onData(ids);
       if (resolveReady) { resolveReady(); resolveReady = null; }
     });
 
     const tpl = series.mapPolygons.template;
     tpl.setAll({
-      tooltipText: hooks.showNames() ? '{name}' : '', interactive: true,
+      tooltipText: hooks.showNames() ? '{displayName}' : '', interactive: true,
       fill: am5.color(palette().land), stroke: am5.color(palette().line), strokeWidth: .8
     });
     tpl.states.create('hover', { fill: am5.color(palette().hover) });
@@ -405,9 +413,9 @@ const MapView = (() => {
       if (!c) return;
       const panel = $('hoverFlag'), img = $('hoverFlagImg');
       panel.dataset.code = id;
-      setText('hoverFlagName', hooks.showNames() ? c.name : '');
+      setText('hoverFlagName', hooks.showNames() ? countryName(c) : '');
       panel.classList.add('show');
-      loadFlag(img, id, { alt: `${c.name} flag`, timeout: 1800 }).then(() => {
+      loadFlag(img, id, { alt: countryName(c), timeout: 1800 }).then(() => {
         if (panel.dataset.code !== id) panel.classList.remove('show');
       });
     });
@@ -426,7 +434,7 @@ const MapView = (() => {
   }
 
   return {
-    available, init, refreshPalette, ensure, ready, waitReady, setTooltips,
+    available, init, refreshPalette, renameCountries, ensure, ready, waitReady, setTooltips,
     select, highlight, clearHighlight, skipReveal,
     zoomIn, zoomOut, resetView, resizeAndReset
   };
