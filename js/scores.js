@@ -17,7 +17,7 @@ function renderBoard() {
   el.replaceChildren();
   if (!rows.length) {
     const p = document.createElement('p');
-    p.textContent = 'No scores yet.';
+    p.textContent = t('game.noScores');
     el.append(p);
     return;
   }

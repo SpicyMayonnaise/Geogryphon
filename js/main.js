@@ -15,6 +15,64 @@ document.querySelectorAll('[data-mode]').forEach(btn =>
 document.querySelectorAll('[name=expertise]').forEach(r =>
   r.addEventListener('change', () => { expertise = r.value; updateCountryStatus(); }));
 
+/* ---------- archive ---------- */
+$('archiveBtn').addEventListener('click', () => Archive.open());
+$('archiveBack').addEventListener('click', () => Archive.close());
+
+/* ---------- settings window (menu only) ---------- */
+function renderLanguagePick() {
+  $('languagePick').replaceChildren(...LANGUAGES.flatMap(l => {
+    const input = document.createElement('input');
+    input.type = 'radio'; input.name = 'language'; input.id = `lang-${l.code}`; input.value = l.code;
+    input.checked = l.code === currentLang;
+    input.disabled = !languageReady(l.code);
+    input.addEventListener('change', () => { if (setLanguage(l.code)) onLanguageChanged(); });
+    const label = document.createElement('label');
+    label.htmlFor = input.id;
+    const name = document.createElement('span');
+    name.textContent = l.label;
+    label.append(name);
+    if (input.disabled) {
+      const soon = document.createElement('small');
+      soon.textContent = t('settings.soon');
+      label.append(soon);
+    }
+    return [input, label];
+  }));
+}
+// Static text is re-filled by setLanguage(); text the code writes is re-rendered here.
+function onLanguageChanged() {
+  renderLanguagePick();
+  renderMute();
+  updateCountryStatus();
+  renderVolume();
+}
+function renderVolume() {
+  const pct = Math.round(Sound.getVolume() * 100);
+  $('volume').value = pct;
+  setText('volumeValue', `${pct}%`);
+}
+function openSettings() {
+  renderVolume();
+  renderLanguagePick();
+  $(Settings.colorBlind() ? 'cbOn' : 'cbOff').checked = true;
+  show('settingsModal');
+  $('settingsDone').focus();
+}
+const closeSettings = () => { hide('settingsModal'); $('settingsBtn').focus(); };
+$('settingsBtn').addEventListener('click', openSettings);
+$('settingsDone').addEventListener('click', closeSettings);
+$('settingsModal').addEventListener('click', e => { if (e.target === $('settingsModal')) closeSettings(); });
+$('volume').addEventListener('input', e => { Sound.setVolume(e.target.value / 100); setText('volumeValue', `${e.target.value}%`); });
+$('volume').addEventListener('change', () => Sound.play('pick')); // preview at the new volume
+document.querySelectorAll('[name=colorBlind]').forEach(r =>
+  r.addEventListener('change', () => Settings.setColorBlind(r.value === 'on')));
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if (!$('settingsModal').classList.contains('hidden')) closeSettings();
+  else if (Archive.isOpen()) Archive.close();
+});
+
 /* ---------- in game ---------- */
 $('backBtn').addEventListener('click', showMenu);
 $('confirmSelection').addEventListener('click', confirmMapSelection);
@@ -84,7 +142,8 @@ function renderMute() {
   document.querySelectorAll('.muteBtn').forEach(b => {
     b.textContent = muted ? '🔇' : '🔊';
     b.setAttribute('aria-pressed', String(muted));
-    b.title = muted ? 'Unmute sounds (M)' : 'Mute sounds (M)';
+    b.title = t(muted ? 'sound.unmute' : 'sound.mute');
+    b.setAttribute('aria-label', b.title);
   });
 }
 function toggleMute() {

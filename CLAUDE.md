@@ -42,11 +42,15 @@ scope, and **load order in `index.html` matters**.
 | File | Purpose |
 |---|---|
 | `js/util.js` | `$`, `setText`, `show`/`hide`, `shuffle`, safe storage `LS`, `showReaction` |
+| `js/i18n.js` | `t('key', vars)`, `applyI18n()`, `setLanguage()`, the `LANGUAGES` list |
+| `js/lang/en.js` | English language pack: every UI string. New language = new file + `ready: true` in `LANGUAGES` |
 | `js/sound.js` | `Sound`: generated sound effects (Web Audio), mute; the only file that touches audio |
 | `js/data/countries.js` | Bundled country rows and the expertise tiers (the data source of truth) |
+| `js/settings.js` | `Settings`: colour blind mode, loads stored language; volume lives in `Sound` |
 | `js/data/flag-study.js` | Study Mode flag-meaning text. Large, data only: do not read it whole |
 | `js/countries.js` | Builds `DATA` from the rows, the pools per mode, optional population refresh |
 | `js/flags.js` | Flag image loading with fallback sources; Study Mode helpers |
+| `js/archive.js` | `Archive`: card grid of every flag, search, continent chips, pop-out details |
 | `js/questions.js` | Trivia generator (`QUESTION_TYPES`) and the category-weighted picker |
 | `js/map.js` | `MapView`: the only file that touches amCharts |
 | `js/scores.js` | Local top-10 leaderboard in localStorage |
@@ -72,7 +76,7 @@ Rules to keep:
   (`RevealCircles`, `circleAround`). The ring is re-projected every frame from the country's main landmass
   (`largestRing` + `trimAntimeridian`) via `chart.convert`, so it follows pan/zoom; min radius 24px, max 5 rings.
   `cleanup()` stops the flash animations and empties the layer. There is no arrow any more (removed on purpose).
-- No reduced-motion handling for these animations until the game has a settings menu (user decision).
+- No reduced-motion handling for these animations yet (user decision; the settings menu could hold it).
 
 - Tiny countries: Italy's shape has no hole for Vatican City. Tiny countries get their real outline scaled up
   around its centre and are raised to the top layer (`mapGeoJSON`, `onTop`). Desktop: VA and MC to 0.2°, max
@@ -97,6 +101,17 @@ Rules to keep:
 - Flag answer tiles: the hover ring only shows for real mouse hover, and not until the mouse moves after a new
   round (`.answers.fresh`), so it never carries over to the next round's tile.
 
+## Settings, language and Archive
+
+- The settings window (⚙️) and the Archive (📚) open only from the menu corner, next to Mute.
+- Volume: `Sound.setVolume(0..1)` scales the master gain; stored in `LS` `geogryphon.volume`. Mute stays separate.
+- Language: all UI text goes through `t()`; static HTML uses `data-i18n`, `-ph`, `-title`, `-aria`. Never hardcode
+  UI text in JS or HTML. Hebrew is listed but `ready: false` (greyed "Coming soon") until `js/lang/he.js` exists;
+  packs set `meta.dir` (`rtl` for Hebrew). Country data (names, capitals, languages) is not translated.
+- Colour blind: `html.cb` swaps `--good/--bad` to `--cb-good/--cb-bad` (blue/orange) and applies the SVG
+  `#daltonize` filter (red-green, in `index.html`) to flag images. `MapView.refreshPalette()` and the clock
+  re-read colours.
+
 ## Sound (js/sound.js)
 
 - All sounds are generated in code (`SOUND_RECIPES`: intensity 0..1 → notes); no audio files.
@@ -106,8 +121,7 @@ Rules to keep:
   clock). `Clock` calls `Sound.tick` every frame in the red zone (last 25%); `Sound` plays once per new second.
 - Hover/click come from delegated listeners in `main.js` on `button, .difficulty label, .answer, .mapControl`;
   touch never plays hover. New buttons get sounds automatically.
-- Mute: `.muteBtn` buttons and the `M` key; stored in `LS` key `geogryphon.muted`. A volume slider waits for the
-  settings menu.
+- Mute: `.muteBtn` buttons and the `M` key; stored in `LS` key `geogryphon.muted`. The volume slider is in the settings menu.
 - Tuning by ear: `tools/soundboard.html` (local only, not committed) plays every recipe at 0, 0.5 and 1.
 
 ## Data and question rules

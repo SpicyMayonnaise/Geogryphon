@@ -34,7 +34,7 @@ function buildExpertiseCodes(level) {
   return new Set(Number.isFinite(limit) ? FAMILIARITY_RANKING.slice(0, limit) : FAMILIARITY_RANKING);
 }
 function expertiseLabel(level = expertise) {
-  return level ? level[0].toUpperCase() + level.slice(1) : 'Intermediate';
+  return t(`exp.${level || 'intermediate'}`);
 }
 
 /* ---------- pools used by the game modes ---------- */
@@ -112,12 +112,7 @@ function updateCountryStatus() {
   const e = $('countryDataStatus');
   if (!e) return;
   const playable = DATA.filter(c => c.playable).length;
-  const mapped = mapCountryIds.size ? DATA.filter(c => c.playable && mapCountryIds.has(c.code)).length : 'pending';
-  const source = {
-    off: 'bundled data',
-    pending: 'bundled data, checking for fresher populations…',
-    done: 'populations refreshed online',
-    failed: 'offline, using bundled data'
-  }[refreshState];
-  e.textContent = `${DATA.length} flags · ${playable} countries · ${mapped} on the map · ${source}`;
+  const mapped = mapCountryIds.size ? DATA.filter(c => c.playable && mapCountryIds.has(c.code)).length : t('status.pending');
+  const source = t({ off: 'status.off', pending: 'status.checking', done: 'status.done', failed: 'status.failed' }[refreshState]);
+  e.textContent = t('status.line', { flags: DATA.length, countries: playable, mapped, source });
 }

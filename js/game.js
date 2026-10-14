@@ -87,6 +87,7 @@ const Clock = (() => {
   return {
     start(seconds, cb) {
       max = seconds; onExpire = cb; running = true; pausedAt = 0; startAt = now();
+      steps = null; // re-read the colours each run (colour blind mode may have changed them)
       Sound.resetTick();
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(tick);
@@ -113,7 +114,7 @@ function clearSelections() {
 }
 function updateSelectionUI() {
   const required = questionSpec?.required || 1, count = selectedIds.size;
-  setText('selectionProgress', `Selected: ${count} / ${required}`);
+  setText('selectionProgress', t('game.selected', { count, required }));
   $('confirmSelection').disabled = count !== required || state !== 'asking';
 }
 function selectMapCountry(id) {
@@ -130,7 +131,7 @@ function selectMapCountry(id) {
     selectedIds.forEach(old => MapView.select(old, false));
     selectedIds.clear();
   } else if (selectedIds.size >= required) {
-    showReaction('Selection full', token('text-2'), 'selectionFull');
+    showReaction(t('game.selectionFull'), token('text-2'), 'selectionFull');
     Sound.play('full');
     return;
   }
@@ -153,8 +154,8 @@ function onCorrect(points, delayMs) {
   Clock.stop();
   score += points;
   setText('score', score);
-  const word = isFreePlay() ? 'Correct!' : r > .7 ? 'Damn!' : r > .35 ? 'Nice!' : 'Close!';
-  showReaction(points > 1 ? `Correct! +${points} points` : word, token('good'), '');
+  const word = t(isFreePlay() ? 'game.correct' : r > .7 ? 'game.damn' : r > .35 ? 'game.nice' : 'game.close');
+  showReaction(points > 1 ? t('game.correctPoints', { points }) : word, token('good'), '');
   Sound.play('correct', r); // faster answers sound bigger
   clearSelections();
   const rid = runId;
@@ -163,7 +164,7 @@ function onCorrect(points, delayMs) {
 
 function applyPenalty() {
   if (isFreePlay()) {
-    showReaction('Wrong! Try again');
+    showReaction(t('game.wrongTryAgain'));
     clearSelections();
     Sound.play('wrong', .5);
     return;
@@ -176,10 +177,10 @@ function applyPenalty() {
   void track.offsetWidth;
   track.classList.add('penalty');
   later(() => track.classList.remove('penalty'), 520);
-  showReaction(`Wrong! −${seconds} second${seconds === 1 ? '' : 's'}`);
+  showReaction(t(seconds === 1 ? 'game.wrongSecond' : 'game.wrongSeconds', { seconds }));
   clearSelections();
   Sound.play('wrong', left <= 0 ? 1 : 1 - r);
-  if (left <= 0) { Sound.play('timesUp', 0, 0.5); lose('The time penalty ran out the clock!'); } // buzzer after the wrong sound
+  if (left <= 0) { Sound.play('timesUp', 0, 0.5); lose(t('game.penaltyLoss')); } // buzzer after the wrong sound
 }
 
 async function lose(reason, pickedCode = null) {
@@ -198,7 +199,7 @@ async function lose(reason, pickedCode = null) {
     const names = eligible.map(id => countryByCode(id)?.name).filter(Boolean);
     const completed = await MapView.highlight(eligible, {
       duration: 5000,
-      label: eligible.length > 1 ? `Eligible answers: ${names.join(', ')}` : `Correct answer: ${names[0]}`
+      label: eligible.length > 1 ? t('game.eligible', { names: names.join(', ') }) : t('game.correctAnswer', { name: names[0] })
     });
     if (stale(rid) || state !== 'revealing' || !completed) return;
   }
@@ -221,11 +222,11 @@ function openStudyCard(country, reason) {
   if (!setState('study')) return;
   const entry = flagStudyEntry(country);
   pendingLoss = { reason, country };
-  setText('studyTitle', `About ${country.name}’s flag`);
+  setText('studyTitle', t('study.title', { name: country.name }));
   $('studySummary').classList.remove('loading');
   setText('studySummary', entry.summary);
   $('studyReadMore').href = entry.source;
-  $('studyReadMore').title = `Open a detailed flag explanation for ${country.name}`;
+  $('studyReadMore').title = t('study.readMoreHint', { name: country.name });
   $('studyReadMore').classList.toggle('hidden', !entry.source);
   loadFlag($('studyFlag'), country.code, { alt: `${country.name} flag`, timeout: 2500 });
   show('studyCard');
@@ -252,7 +253,7 @@ function pickTarget(pool) {
 function beginAsking(seconds, rid) {
   if (stale(rid) || !setState('asking')) return;
   if (isFreePlay()) { setText('time', '∞'); $('time').style.color = ''; }
-  else Clock.start(seconds, () => { Sound.play('timesUp'); lose('Time’s up!'); });
+  else Clock.start(seconds, () => { Sound.play('timesUp'); lose(t('game.timesUp')); });
   updateSelectionUI();
 }
 
@@ -265,7 +266,7 @@ async function askNext(rid) {
   if (mode === 'flag') {
     hide('questionActions');
     target = pickTarget(flagPool());
-    setText('question', 'Which country is this?');
+    setText('question', t('game.whichCountry'));
     show('flagArea'); hide('mapWrap');
     const options = shuffle([target, ...shuffle(flagPool().filter(x => x.code !== target.code)).slice(0, 3)]);
     $('answers').classList.add('fresh'); // no hover ring until the mouse moves (main.js)
@@ -277,7 +278,7 @@ async function askNext(rid) {
       b.addEventListener('click', () => onFlagAnswer(x.code));
       return b;
     }));
-    const res = await loadFlag($('flag'), target.code, { alt: 'Mystery country flag', timeout: 3500 });
+    const res = await loadFlag($('flag'), target.code, { alt: t('game.mysteryFlag'), timeout: 3500 });
     if (stale(rid)) return;
     // The emoji fallback can leak the answer (two letters on Windows), so re-roll a few times first.
     if (!res.ok && flagRetries < 5) { flagRetries++; return askNext(rid); }
@@ -291,7 +292,7 @@ async function askNext(rid) {
   $('answers').replaceChildren();
   if (mode === 'map') {
     target = pickTarget(mapPool());
-    questionSpec = { category: 'map', multi: false, required: 1, eligible: [target.code], text: `Find ${target.name}` };
+    questionSpec = { category: 'map', multi: false, required: 1, eligible: [target.code], text: t('game.find', { name: target.name }) };
   } else {
     questionSpec = nextTriviaQuestion();
     target = countryByCode(questionSpec.eligible[0]);
@@ -306,7 +307,7 @@ function onFlagAnswer(code) {
   if (state !== 'asking' || mode !== 'flag') return;
   if (code === target.code) { markAnswers(code, code); onCorrect(1, 650); return; }
   Sound.play('wrong', 1 - timeLeft());
-  lose('Wrong answer.', code);
+  lose(t('game.wrongAnswer'), code);
 }
 
 // Marks the picked and the correct flag answer. markAnswers(null, null) clears the marks.
@@ -323,11 +324,11 @@ function triviaReadiness() {
   return { mapped, trivia, ready: mapped >= 20 && trivia >= 20 };
 }
 async function waitForTriviaReady() {
-  setText('question', 'Preparing the expanded trivia database…');
+  setText('question', t('game.preparingTrivia'));
   hide('questionActions');
   await MapView.waitReady(8000);
   const st = triviaReadiness();
-  if (!st.ready && mapPool().filter(c => c.capital).length < 10) throw new Error('Trivia data could not be prepared.');
+  if (!st.ready && mapPool().filter(c => c.capital).length < 10) throw new Error(t('game.triviaFailed'));
   resetQuestions();
   const candidates = candidateQuestions();
   const multi = candidates.filter(q => q.multi).length;
@@ -335,7 +336,7 @@ async function waitForTriviaReady() {
   const counts = cats.map(c =>
     `${c} ${candidates.filter(q => q.category === c && !q.multi).length}/${candidates.filter(q => q.category === c && q.multi).length}`).join(' · ');
   console.info('Trivia question pool (single/multi):', counts);
-  setText('countryDataStatus', `Trivia ready: ${triviaPool().length} countries · ${candidates.length} questions · ${multi} multi-select · single/multi: ${counts}`);
+  setText('countryDataStatus', t('status.trivia', { countries: triviaPool().length, questions: candidates.length, multi, counts }));
   return candidates.length;
 }
 
@@ -353,7 +354,7 @@ function resetRun() {
 
 async function startGame(m) {
   if (m !== 'flag' && !MapView.available()) {
-    setText('countryDataStatus', 'The map library failed to load. Check your connection and reload. Flag mode still works.');
+    setText('countryDataStatus', t('status.mapFailed'));
     return;
   }
   runId++;
@@ -373,10 +374,10 @@ async function startGame(m) {
 
   document.body.dataset.gameMode = m;
   hide('menu'); show('game');
-  const label = m === 'flag' ? 'Flag' : m === 'map' ? 'Map' : 'Trivia';
-  const diffLabel = isFreePlay() ? 'Free Play' : difficulty[0].toUpperCase() + difficulty.slice(1);
+  const label = t(`mode.${m}`);
+  const diffLabel = t(`diff.${difficulty}`);
   setText('modeLabel', `${label.toUpperCase()} · ${diffLabel.toUpperCase()} · ${expertise.toUpperCase()}`);
-  setText('boardTitle', `🏆 ${label} · ${diffLabel} · ${expertiseLabel()} Top 10`);
+  setText('boardTitle', t('game.boardTitle', { mode: label, difficulty: diffLabel, expertise: expertiseLabel() }));
   renderBoard();
 
   if (m !== 'flag') { MapView.ensure(); MapView.setTooltips($('showNames').checked); }
@@ -387,7 +388,7 @@ async function startGame(m) {
     catch (error) {
       if (stale(rid)) return;
       setText('question', error.message);
-      showReaction('Trivia data unavailable', token('bad'), 'penaltyBurst');
+      showReaction(t('game.triviaUnavailable'), token('bad'), 'penaltyBurst');
       return;
     }
     if (stale(rid)) return;

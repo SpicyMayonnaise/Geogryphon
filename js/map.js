@@ -177,6 +177,8 @@ const MapView = (() => {
     typeof am5 !== 'undefined' && typeof am5map !== 'undefined' && typeof am5geodata_worldLow !== 'undefined';
 
   function init(h) { hooks = { ...hooks, ...h }; }
+  // Colour tokens changed (colour blind mode): read them again on next use.
+  function refreshPalette() { C = null; }
 
   function polygonsFor(ids) {
     const out = [];
@@ -424,7 +426,7 @@ const MapView = (() => {
   }
 
   return {
-    available, init, ensure, ready, waitReady, setTooltips,
+    available, init, refreshPalette, ensure, ready, waitReady, setTooltips,
     select, highlight, clearHighlight, skipReveal,
     zoomIn, zoomOut, resetView, resizeAndReset
   };

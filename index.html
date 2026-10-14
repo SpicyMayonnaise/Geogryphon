@@ -10,17 +10,136 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;600;700&display=swap">
 <link rel="stylesheet" href="css/style.css">
 </head>
-<body><div class="wrap">
-<section id="menu" class="menu"><button class="mapControl muteBtn menuMute" type="button" aria-label="Mute sounds" aria-pressed="false">🔊</button><div class="menuin"><div class="kicker">ENDLESS GEOGRAPHY</div><h1>Choose your challenge.</h1><p id="countryDataStatus" class="muted">Country database: loading expanded coverage…</p><label class="option refreshOption" title="Updates country populations from the World Bank when online. The game works fully without it. Turning it off applies after a reload."><input id="liveRefresh" type="checkbox" checked> Refresh populations online (optional)</label><section class="settings"><h2>Difficulty</h2><div class="difficulty"><input name="difficulty" id="easy" value="easy" type="radio"><label for="easy">Easy<small>20 seconds</small></label><input name="difficulty" id="normal" value="normal" type="radio" checked><label for="normal">Normal<small>10 seconds</small></label><input name="difficulty" id="hard" value="hard" type="radio"><label for="hard">Hard<small>5 seconds</small></label><input name="difficulty" id="extreme" value="extreme" type="radio"><label for="extreme">Extreme<small>3 seconds</small></label><input name="difficulty" id="free" value="free" type="radio"><label for="free">Free Play<small>No timer</small></label></div></section><section class="settings"><h2>Expertise</h2><div class="difficulty expertise"><input name="expertise" id="novice" value="novice" type="radio"><label for="novice">Novice<small>Top 70 countries</small></label><input name="expertise" id="intermediate" value="intermediate" type="radio" checked><label for="intermediate">Intermediate<small>Top 120 countries</small></label><input name="expertise" id="pro" value="pro" type="radio"><label for="pro">Pro<small>Top 180 countries</small></label><input name="expertise" id="expert" value="expert" type="radio"><label for="expert">Expert<small>All countries</small></label></div></section><div class="modes"><div><button class="mode" data-mode="flag">🚩<b>Flag Mode</b><span class="muted">Identify flags.</span></button><label class="option"><input id="studyMode" type="checkbox"> Study Mode</label></div><div><button class="mode" data-mode="map">🗺️<b>Map Mode</b><span class="muted">Find countries.</span></button><label class="option"><input id="showNames" type="checkbox" checked> Show names on hover</label><label class="option"><input id="showFlags" type="checkbox"> Show hovered flag</label></div><button class="mode" data-mode="trivia">🧠<b>Country Trivia</b><span class="muted">Answer on the map.</span></button></div></div></section>
-<section id="game" class="hidden"><div class="gamegrid"><main><header class="head"><div><button id="backBtn" class="btn btn-ghost" type="button">← Change mode</button><div class="kicker" id="modeLabel"></div><h1 id="question" aria-live="polite"></h1><div id="questionActions" class="questionActions hidden"><span id="selectionProgress" class="selectionProgress">Selected: 0 / 1</span><button id="confirmSelection" class="btn btn-primary" type="button" disabled>Confirm Selection</button></div></div><div class="stats"><button class="mapControl muteBtn" type="button" aria-label="Mute sounds" aria-pressed="false">🔊</button><div class="stat"><small>Score</small><b id="score">0</b></div><div class="stat"><small>Time</small><b id="time">10s</b></div></div></header><div class="timerTrack"><div id="timerBar" class="timerBar"></div></div><section class="card play"><div id="reaction" class="reaction" role="status"></div><div id="revealNotice" class="revealNotice hidden"></div><div id="flagArea" class="flagbox"><img id="flag"></div><div id="mapWrap" class="mapWrap hidden"><div id="mapArea" class="map"></div><svg id="revealLayer" class="revealLayer" aria-hidden="true"></svg><div class="mapControls" aria-label="Map controls"><button class="mapControl" type="button" title="Zoom in" id="zoomInBtn">+</button><button class="mapControl" type="button" title="Zoom out" id="zoomOutBtn">−</button><button class="mapControl reset" type="button" title="Reset map" id="zoomResetBtn">⌂</button></div><div class="mapHint">Drag to pan · Scroll or pinch to zoom</div><div id="hoverFlag" class="hoverFlag"><img id="hoverFlagImg"><span id="hoverFlagName"></span></div></div><div id="answers" class="answers"></div><button id="boardBtn" class="mapControl boardBtn" type="button" aria-label="Show leaderboard" aria-expanded="false" aria-controls="sidePanel">🏆</button></section></main><div id="boardScrim" class="boardScrim"></div><aside id="sidePanel" class="card side"><h2 id="boardTitle">🏆 Top 10</h2><div id="board"></div></aside></div></section></div>
-<div id="studyCard" class="studyCard hidden"><div class="studyInner"><div class="kicker">STUDY MODE</div><img id="studyFlag" class="studyFlag" alt="Correct flag"><h2 id="studyTitle"></h2><p id="studySummary"></p><div class="studyActions"><a id="studyReadMore" class="btn btn-ghost" target="_blank" rel="noopener noreferrer">Read more</a><button id="studyContinue" class="btn btn-primary" type="button">Continue</button></div></div></div>
-<div id="modal" class="modal hidden"><div class="modalin"><div class="kicker">RUN OVER</div><h2>Final score: <span id="final"></span></h2><p>Correct answer: <b id="correct"></b></p><p id="reason"></p><div class="save"><input id="name" maxlength="20" placeholder="Player name"><button id="saveBtn" class="btn btn-secondary">Save</button></div><button id="againBtn" class="btn btn-primary again" type="button">Play again</button></div></div>
+<body>
+<!-- Colour blind mode: daltonize filter for flag images (red-green colour blindness). See css .cb rules. -->
+<svg class="svgDefs" aria-hidden="true" focusable="false"><filter id="daltonize" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="1 0 0 0 0  -0.4375 1.4375 0 0 0  0.2625 -0.5625 1.3 0 0  0 0 0 1 0"/></filter></svg>
+<div class="wrap">
+
+<section id="menu" class="menu">
+  <div class="menuTools">
+    <button id="archiveBtn" class="mapControl" type="button" data-i18n-aria="menu.archive" data-i18n-title="menu.archive">📚</button>
+    <button id="settingsBtn" class="mapControl" type="button" data-i18n-aria="menu.settings" data-i18n-title="menu.settings">⚙️</button>
+    <button class="mapControl muteBtn" type="button" aria-label="Mute sounds" aria-pressed="false">🔊</button>
+  </div>
+  <div class="menuin">
+    <div class="kicker" data-i18n="menu.kicker">ENDLESS GEOGRAPHY</div>
+    <h1 data-i18n="menu.title">Choose your challenge.</h1>
+    <p id="countryDataStatus" class="muted"></p>
+    <label class="option refreshOption" data-i18n-title="menu.refreshHint"><input id="liveRefresh" type="checkbox" checked> <span data-i18n="menu.refresh">Refresh populations online (optional)</span></label>
+    <section class="settings"><h2 data-i18n="menu.difficulty">Difficulty</h2><div class="difficulty">
+      <input name="difficulty" id="easy" value="easy" type="radio"><label for="easy"><span data-i18n="diff.easy">Easy</span><small data-i18n="diff.easySub">20 seconds</small></label>
+      <input name="difficulty" id="normal" value="normal" type="radio" checked><label for="normal"><span data-i18n="diff.normal">Normal</span><small data-i18n="diff.normalSub">10 seconds</small></label>
+      <input name="difficulty" id="hard" value="hard" type="radio"><label for="hard"><span data-i18n="diff.hard">Hard</span><small data-i18n="diff.hardSub">5 seconds</small></label>
+      <input name="difficulty" id="extreme" value="extreme" type="radio"><label for="extreme"><span data-i18n="diff.extreme">Extreme</span><small data-i18n="diff.extremeSub">3 seconds</small></label>
+      <input name="difficulty" id="free" value="free" type="radio"><label for="free"><span data-i18n="diff.free">Free Play</span><small data-i18n="diff.freeSub">No timer</small></label>
+    </div></section>
+    <section class="settings"><h2 data-i18n="menu.expertise">Expertise</h2><div class="difficulty expertise">
+      <input name="expertise" id="novice" value="novice" type="radio"><label for="novice"><span data-i18n="exp.novice">Novice</span><small data-i18n="exp.noviceSub">Top 70 countries</small></label>
+      <input name="expertise" id="intermediate" value="intermediate" type="radio" checked><label for="intermediate"><span data-i18n="exp.intermediate">Intermediate</span><small data-i18n="exp.intermediateSub">Top 120 countries</small></label>
+      <input name="expertise" id="pro" value="pro" type="radio"><label for="pro"><span data-i18n="exp.pro">Pro</span><small data-i18n="exp.proSub">Top 180 countries</small></label>
+      <input name="expertise" id="expert" value="expert" type="radio"><label for="expert"><span data-i18n="exp.expert">Expert</span><small data-i18n="exp.expertSub">All countries</small></label>
+    </div></section>
+    <div class="modes">
+      <div><button class="mode" data-mode="flag">🚩<b data-i18n="mode.flagTitle">Flag Mode</b><span class="muted" data-i18n="mode.flagSub">Identify flags.</span></button><label class="option"><input id="studyMode" type="checkbox"> <span data-i18n="menu.studyMode">Study Mode</span></label></div>
+      <div><button class="mode" data-mode="map">🗺️<b data-i18n="mode.mapTitle">Map Mode</b><span class="muted" data-i18n="mode.mapSub">Find countries.</span></button><label class="option"><input id="showNames" type="checkbox" checked> <span data-i18n="menu.showNames">Show names on hover</span></label><label class="option"><input id="showFlags" type="checkbox"> <span data-i18n="menu.showFlags">Show hovered flag</span></label></div>
+      <button class="mode" data-mode="trivia">🧠<b data-i18n="mode.triviaTitle">Country Trivia</b><span class="muted" data-i18n="mode.triviaSub">Answer on the map.</span></button>
+    </div>
+  </div>
+</section>
+
+<section id="archive" class="archive hidden">
+  <header class="archiveHead">
+    <button id="archiveBack" class="btn btn-ghost" type="button" data-i18n="archive.back">← Menu</button>
+    <div class="kicker" data-i18n="archive.kicker">ARCHIVE</div>
+    <h1 data-i18n="archive.title">Every flag, every country.</h1>
+    <input id="archiveSearch" class="archiveSearch" type="search" autocomplete="off" data-i18n-ph="archive.search" data-i18n-aria="archive.search">
+    <div id="archiveFilters" class="archiveFilters"></div>
+    <p id="archiveCount" class="muted archiveCount" aria-live="polite"></p>
+  </header>
+  <div id="archiveGrid" class="archiveGrid"></div>
+</section>
+
+<section id="game" class="hidden"><div class="gamegrid"><main>
+  <header class="head"><div>
+    <button id="backBtn" class="btn btn-ghost" type="button" data-i18n="game.back">← Change mode</button>
+    <div class="kicker" id="modeLabel"></div>
+    <h1 id="question" aria-live="polite"></h1>
+    <div id="questionActions" class="questionActions hidden"><span id="selectionProgress" class="selectionProgress"></span><button id="confirmSelection" class="btn btn-primary" type="button" disabled data-i18n="game.confirm">Confirm Selection</button></div>
+  </div><div class="stats">
+    <button class="mapControl muteBtn" type="button" aria-label="Mute sounds" aria-pressed="false">🔊</button>
+    <div class="stat"><small data-i18n="game.score">Score</small><b id="score">0</b></div>
+    <div class="stat"><small data-i18n="game.time">Time</small><b id="time">10s</b></div>
+  </div></header>
+  <div class="timerTrack"><div id="timerBar" class="timerBar"></div></div>
+  <section class="card play">
+    <div id="reaction" class="reaction" role="status"></div>
+    <div id="revealNotice" class="revealNotice hidden"></div>
+    <div id="flagArea" class="flagbox"><img id="flag"></div>
+    <div id="mapWrap" class="mapWrap hidden">
+      <div id="mapArea" class="map"></div>
+      <svg id="revealLayer" class="revealLayer" aria-hidden="true"></svg>
+      <div class="mapControls" aria-label="Map controls">
+        <button class="mapControl" type="button" id="zoomInBtn" data-i18n-title="game.zoomIn">+</button>
+        <button class="mapControl" type="button" id="zoomOutBtn" data-i18n-title="game.zoomOut">−</button>
+        <button class="mapControl reset" type="button" id="zoomResetBtn" data-i18n-title="game.resetMap">⌂</button>
+      </div>
+      <div class="mapHint" data-i18n="game.mapHint">Drag to pan · Scroll or pinch to zoom</div>
+      <div id="hoverFlag" class="hoverFlag"><img id="hoverFlagImg"><span id="hoverFlagName"></span></div>
+    </div>
+    <div id="answers" class="answers"></div>
+    <button id="boardBtn" class="mapControl boardBtn" type="button" aria-expanded="false" aria-controls="sidePanel" data-i18n-aria="game.board">🏆</button>
+  </section>
+</main><div id="boardScrim" class="boardScrim"></div><aside id="sidePanel" class="card side"><h2 id="boardTitle"></h2><div id="board"></div></aside></div></section>
+</div>
+
+<div id="studyCard" class="studyCard hidden"><div class="studyInner">
+  <div class="kicker" data-i18n="study.kicker">STUDY MODE</div>
+  <img id="studyFlag" class="studyFlag" data-i18n-aria="study.flagAlt">
+  <h2 id="studyTitle"></h2><p id="studySummary"></p>
+  <div class="studyActions"><a id="studyReadMore" class="btn btn-ghost" target="_blank" rel="noopener noreferrer" data-i18n="study.readMore">Read more</a><button id="studyContinue" class="btn btn-primary" type="button" data-i18n="study.continue">Continue</button></div>
+</div></div>
+
+<div id="modal" class="modal hidden"><div class="modalin">
+  <div class="kicker" data-i18n="over.kicker">RUN OVER</div>
+  <h2><span data-i18n="over.final">Final score:</span> <span id="final"></span></h2>
+  <p><span data-i18n="over.correct">Correct answer:</span> <b id="correct"></b></p>
+  <p id="reason"></p>
+  <div class="save"><input id="name" maxlength="20" data-i18n-ph="over.name"><button id="saveBtn" class="btn btn-secondary" data-i18n="over.save">Save</button></div>
+  <button id="againBtn" class="btn btn-primary again" type="button" data-i18n="over.again">Play again</button>
+</div></div>
+
+<div id="settingsModal" class="modal settingsModal hidden" role="dialog" aria-modal="true" aria-labelledby="settingsTitle"><div class="modalin settingsIn">
+  <div class="kicker" data-i18n="settings.kicker">SETTINGS</div>
+  <h2 id="settingsTitle" data-i18n="settings.title">Settings</h2>
+  <div class="settingRow">
+    <label for="volume" data-i18n="settings.volume">Volume</label>
+    <div class="volumeRow"><input id="volume" type="range" min="0" max="100" step="5"><span id="volumeValue" class="volumeValue"></span></div>
+  </div>
+  <div class="settingRow">
+    <span class="settingLabel" data-i18n="settings.language">Language</span>
+    <div id="languagePick" class="difficulty twoUp"></div>
+  </div>
+  <div class="settingRow">
+    <span class="settingLabel" data-i18n="settings.colorBlind">Color Blind</span>
+    <div class="difficulty twoUp">
+      <input name="colorBlind" id="cbOff" value="off" type="radio"><label for="cbOff"><span data-i18n="settings.off">Off</span></label>
+      <input name="colorBlind" id="cbOn" value="on" type="radio"><label for="cbOn"><span data-i18n="settings.on">On</span></label>
+    </div>
+    <p class="muted settingHint" data-i18n="settings.colorBlindHint"></p>
+  </div>
+  <button id="settingsDone" class="btn btn-primary again" type="button" data-i18n="settings.done">Done</button>
+</div></div>
+
 <script src="js/util.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/lang/en.js"></script>
 <script src="js/sound.js"></script>
+<script src="js/settings.js"></script>
 <script src="js/data/flag-study.js"></script>
 <script src="js/data/countries.js"></script>
 <script src="js/countries.js"></script>
 <script src="js/flags.js"></script>
+<script src="js/archive.js"></script>
 <script src="js/questions.js"></script>
 <script src="js/map.js"></script>
 <script src="js/scores.js"></script>

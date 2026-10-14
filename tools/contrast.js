@@ -26,7 +26,9 @@ const PAIRS = [
   ['on-accent', 'hot', 4.5], ['hot', 'bg', 4.5],
   ['good', 'bg', 4.5], ['good', 'surface-1', 4.5], ['on-accent', 'good', 4.5],
   ['bad', 'bg', 4.5], ['bad', 'surface-1', 4.5], ['on-accent', 'bad', 4.5],
-  ['text', 'map-land', 4.5], ['text', 'map-sea', 4.5]
+  ['text', 'map-land', 4.5], ['text', 'map-sea', 4.5],
+  ['cb-good', 'bg', 4.5], ['cb-good', 'surface-1', 4.5], ['on-accent', 'cb-good', 4.5],
+  ['cb-bad', 'bg', 4.5], ['cb-bad', 'surface-1', 4.5], ['on-accent', 'cb-bad', 4.5]
 ];
 
 let failed = 0;
