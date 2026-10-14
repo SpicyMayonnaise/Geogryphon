@@ -212,6 +212,16 @@ h1,h2,.stat b,.mode b {
   gap:var(--s-8);
 }
 
+/* Difficulty has five options (Free Play included); expertise keeps four. */
+.difficulty:not(.expertise) {
+  grid-template-columns:repeat(5,1fr);
+}
+
+/* Free Play: no clock, so the timer bar is hidden (its space is kept so the layout does not jump). */
+.freePlay .timerTrack {
+  visibility:hidden;
+}
+
 .difficulty input {
   position:absolute;
   opacity:0;
@@ -483,8 +493,12 @@ h1,h2,.stat b,.mode b {
   transition:transform var(--press),box-shadow var(--press);
 }
 
-.answer:hover {
-  box-shadow:0 4px 0 var(--edge),inset 0 0 0 2px var(--accent);
+/* Hover ring only for real mouse hover. On touch, :hover sticks to whatever is under the finger, and a new
+   round's tile in the same spot would start out ringed. .fresh (set each round) waits for the mouse to move. */
+@media(hover:hover) {
+  .answers:not(.fresh) .answer:hover {
+    box-shadow:0 4px 0 var(--edge),inset 0 0 0 2px var(--accent);
+  }
 }
 
 .answer:active {
@@ -831,13 +845,64 @@ h1,h2,.stat b,.mode b {
   }
 }
 
+/* Leaderboard button and sheet: only used on narrow screens (see the 1200px query). */
+.boardBtn {
+  display:none;
+  position:absolute;
+  right:var(--s-16);
+  bottom:var(--s-16);
+  z-index:9;
+  font-size:var(--fs-18);
+}
+
+.boardScrim {
+  display:none;
+}
+
+/* Narrow screens: the play column fills the screen and the page never scrolls during a run.
+   The leaderboard becomes a sheet that slides up from the bottom (🏆 button). */
 @media(max-width:1200px) {
   .gamegrid {
     grid-template-columns:1fr;
   }
+  html:has(#game:not(.hidden)),body:has(#game:not(.hidden)) {
+    height:100%;
+    overflow:hidden;
+    overscroll-behavior:none;
+  }
+  body:has(#game:not(.hidden)) .wrap {
+    min-height:0;
+  }
+  .boardBtn {
+    display:block;
+  }
+  /* Flag mode: answer tiles fill the bottom, so the button sits top-right of the flag instead. */
+  [data-game-mode=flag] .boardBtn {
+    top:var(--s-12);
+    bottom:auto;
+    right:var(--s-12);
+  }
   .side {
-    order:2;
-    max-height:none;
+    position:fixed;
+    left:0;
+    right:0;
+    bottom:0;
+    z-index:31;
+    max-height:70dvh;
+    border-radius:var(--r-24) var(--r-24) 0 0;
+    padding-bottom:var(--s-32);
+    transform:translateY(105%);
+    transition:transform .25s ease;
+  }
+  .side.open {
+    transform:none;
+  }
+  .boardScrim.show {
+    display:block;
+    position:fixed;
+    inset:0;
+    z-index:30;
+    background:var(--scrim);
   }
 }
 
@@ -851,8 +916,11 @@ h1,h2,.stat b,.mode b {
   :root {
     --pad:var(--s-8);
   }
-  .difficulty,.answers {
+  .difficulty,.difficulty:not(.expertise),.answers {
     grid-template-columns:1fr 1fr;
+  }
+  .difficulty label[for=free] {
+    grid-column:span 2;
   }
   .play {
     padding:var(--s-4);

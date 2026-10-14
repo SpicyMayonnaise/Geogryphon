@@ -74,6 +74,10 @@ Rules to keep:
   `cleanup()` stops the flash animations and empties the layer. There is no arrow any more (removed on purpose).
 - No reduced-motion handling for these animations until the game has a settings menu (user decision).
 
+- Covered and tiny countries: Italy's shape has no hole for Vatican City, so `COVERED_COUNTRIES` (VA, MC) are raised
+  to the top layer. `ENLARGED_COUNTRIES` (VA, MC) have their real outline scaled up around its centre to
+  `ENLARGED_SPAN_DEG` (0.2°) so they can be tapped at max zoom (64). No markers or circles (user rejected them).
+- Portrait maps (phones) start zoomed so the inhabited world fills the height (`homeZoom`, max 4x).
 - The amCharts logo stays visible (`KEEP_AMCHARTS_LOGO = true`): the free licence requires it.
 - amCharts' own wheel zoom is off (`wheelY: 'none'`). `onWheel` zooms in proportion to the scroll distance
   (one 100px notch = one `ZOOM_STEP`) and ignores non-cancelable wheel events, which are page-scroll momentum.
@@ -82,6 +86,15 @@ Rules to keep:
   dragging down or right gets blocked when zoomed in.
 - When testing in a hidden browser pane, frames are throttled (~2 fps), so amCharts animations and re-fits
   land late. Wait longer or take a screenshot before reading chart state.
+
+## Difficulty and phone layout
+
+- Free Play (`difficulty === 'free'`, `isFreePlay()`): no clock, no time penalty (a wrong map pick only says
+  "Wrong! Try again"); a wrong flag still ends the run. It has its own Top 10 (score key includes difficulty).
+- At 1200px and below, the page never scrolls during a run (`html/body:has(#game:not(.hidden))`), and the
+  leaderboard is a bottom sheet opened by the 🏆 `#boardBtn` (`setBoardOpen` in main.js).
+- Flag answer tiles: the hover ring only shows for real mouse hover, and not until the mouse moves after a new
+  round (`.answers.fresh`), so it never carries over to the next round's tile.
 
 ## Sound (js/sound.js)
 
@@ -100,7 +113,7 @@ Rules to keep:
 
 - Country rows: `code | ISO3 | name | capital | continent | languages;separated | population in thousands | playable 1/0`.
   Edit them in `js/data/countries.js`.
-- `playable` = the 193 UN members plus Vatican City, Palestine and Taiwan. Territories appear in Flag mode only.
+- `playable` = the 193 UN members plus Vatican City and Taiwan. Palestine was removed on purpose (does not fit the game). Territories appear in Flag mode only.
 - Populations are rounded estimates. Population questions skip countries within 6% of a band edge.
 - Online refresh only updates populations. It must never change names, capitals, languages or `playable`.
 - Trivia mix is set by `CATEGORY_WEIGHTS` in `js/questions.js` (capital 40%, language 30%, population 30%).

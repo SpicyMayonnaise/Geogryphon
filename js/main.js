@@ -18,9 +18,21 @@ document.querySelectorAll('[name=expertise]').forEach(r =>
 /* ---------- in game ---------- */
 $('backBtn').addEventListener('click', showMenu);
 $('confirmSelection').addEventListener('click', confirmMapSelection);
+// A new round's tiles start without the hover ring; the first real mouse move over them brings it back.
+$('answers').addEventListener('pointermove', e => { if (e.pointerType === 'mouse') $('answers').classList.remove('fresh'); });
 $('zoomInBtn').addEventListener('click', () => MapView.zoomIn());
 $('zoomOutBtn').addEventListener('click', () => MapView.zoomOut());
 $('zoomResetBtn').addEventListener('click', () => MapView.resetView());
+
+/* ---------- leaderboard sheet (narrow screens: the board slides up over the play area) ---------- */
+function setBoardOpen(open) {
+  $('sidePanel').classList.toggle('open', open);
+  $('boardScrim').classList.toggle('show', open);
+  $('boardBtn').setAttribute('aria-expanded', String(open));
+}
+$('boardBtn').addEventListener('click', () => setBoardOpen(!$('sidePanel').classList.contains('open')));
+$('boardScrim').addEventListener('click', () => setBoardOpen(false));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') setBoardOpen(false); });
 
 /* ---------- study card and game over ---------- */
 $('studyContinue').addEventListener('click', continueFromStudy);

@@ -13,6 +13,10 @@
 */
 
 const DIFFICULTY_SECONDS = { easy: 20, normal: 10, hard: 5, extreme: 3 };
+// Free Play has no clock: no countdown, no time penalty. A wrong flag still ends the run.
+const isFreePlay = () => difficulty === 'free';
+// Share of the clock left (1 = all of it). Free Play counts as a middling answer for reactions and sounds.
+const timeLeft = () => isFreePlay() ? .5 : Clock.ratio();
 // After a Flag-mode loss, how long the marked answer tiles stay visible before the overlay covers them.
 const FLAG_REVEAL_MS = 1000;
 
@@ -144,12 +148,13 @@ function confirmMapSelection() {
 
 /* ---------- outcomes ---------- */
 function onCorrect(points, delayMs) {
-  const r = Clock.ratio();
+  const r = timeLeft();
   if (!setState('between')) return;
   Clock.stop();
   score += points;
   setText('score', score);
-  showReaction(points > 1 ? `Correct! +${points} points` : (r > .7 ? 'Damn!' : r > .35 ? 'Nice!' : 'Close!'), token('good'), '');
+  const word = isFreePlay() ? 'Correct!' : r > .7 ? 'Damn!' : r > .35 ? 'Nice!' : 'Close!';
+  showReaction(points > 1 ? `Correct! +${points} points` : word, token('good'), '');
   Sound.play('correct', r); // faster answers sound bigger
   clearSelections();
   const rid = runId;
@@ -157,6 +162,12 @@ function onCorrect(points, delayMs) {
 }
 
 function applyPenalty() {
+  if (isFreePlay()) {
+    showReaction('Wrong! Try again');
+    clearSelections();
+    Sound.play('wrong', .5);
+    return;
+  }
   const r = Clock.ratio(); // before the penalty: how much time the player had used
   const seconds = Math.max(1, Math.floor(maxTime * .33));
   const left = Clock.penalize(seconds);
@@ -240,7 +251,8 @@ function pickTarget(pool) {
 
 function beginAsking(seconds, rid) {
   if (stale(rid) || !setState('asking')) return;
-  Clock.start(seconds, () => { Sound.play('timesUp'); lose('Time’s up!'); });
+  if (isFreePlay()) { setText('time', '∞'); $('time').style.color = ''; }
+  else Clock.start(seconds, () => { Sound.play('timesUp'); lose('Time’s up!'); });
   updateSelectionUI();
 }
 
@@ -256,6 +268,7 @@ async function askNext(rid) {
     setText('question', 'Which country is this?');
     show('flagArea'); hide('mapWrap');
     const options = shuffle([target, ...shuffle(flagPool().filter(x => x.code !== target.code)).slice(0, 3)]);
+    $('answers').classList.add('fresh'); // no hover ring until the mouse moves (main.js)
     $('answers').replaceChildren(...options.map((x, i) => {
       const b = document.createElement('button');
       b.className = 'answer';
@@ -292,7 +305,7 @@ async function askNext(rid) {
 function onFlagAnswer(code) {
   if (state !== 'asking' || mode !== 'flag') return;
   if (code === target.code) { markAnswers(code, code); onCorrect(1, 650); return; }
-  Sound.play('wrong', 1 - Clock.ratio());
+  Sound.play('wrong', 1 - timeLeft());
   lose('Wrong answer.', code);
 }
 
@@ -351,16 +364,19 @@ async function startGame(m) {
   mode = m;
   difficulty = document.querySelector('[name=difficulty]:checked').value;
   expertise = document.querySelector('[name=expertise]:checked').value;
-  duration = DIFFICULTY_SECONDS[difficulty];
+  duration = DIFFICULTY_SECONDS[difficulty] ?? 10;
+  document.body.classList.toggle('freePlay', isFreePlay());
   score = 0; target = null; questionSpec = null; recentTargets = []; flagRetries = 0;
   resetQuestions();
   resetScoreSaved();
   setText('score', 0);
 
+  document.body.dataset.gameMode = m;
   hide('menu'); show('game');
   const label = m === 'flag' ? 'Flag' : m === 'map' ? 'Map' : 'Trivia';
-  setText('modeLabel', `${label.toUpperCase()} · ${difficulty.toUpperCase()} · ${expertise.toUpperCase()}`);
-  setText('boardTitle', `🏆 ${label} · ${difficulty[0].toUpperCase() + difficulty.slice(1)} · ${expertiseLabel()} Top 10`);
+  const diffLabel = isFreePlay() ? 'Free Play' : difficulty[0].toUpperCase() + difficulty.slice(1);
+  setText('modeLabel', `${label.toUpperCase()} · ${diffLabel.toUpperCase()} · ${expertise.toUpperCase()}`);
+  setText('boardTitle', `🏆 ${label} · ${diffLabel} · ${expertiseLabel()} Top 10`);
   renderBoard();
 
   if (m !== 'flag') { MapView.ensure(); MapView.setTooltips($('showNames').checked); }
@@ -381,6 +397,7 @@ async function startGame(m) {
 
 function showMenu() {
   runId++;
+  setBoardOpen(false);
   resetRun();
   setState('idle');
   hide('game'); show('menu');

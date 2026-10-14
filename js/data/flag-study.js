@@ -120,7 +120,6 @@ OM:'White represents peace, red historic struggles and the sultanate, green fert
 PA:'Blue and red represent historic political traditions, white peace, and the stars purity, strength, and civic virtues.',
 PK:'Green represents the Muslim majority, white religious minorities, the crescent progress, and the star light and knowledge.',
 PR:'The star represents the island, blue the sky and coastal waters, red vitality, white liberty and rights, and the triangle core republican ideals.',
-PS:'Black, white, green, and red are Pan-Arab colours associated with historic Arab dynasties and modern Palestinian identity.',
 PY:'Red, white, and blue are associated with patriotism, peace, and liberty; the two-sided emblems emphasize the republic and national institutions.',
 QA:'Maroon reflects Qatar’s historic dye tradition, white peace, and the nine points distinguish Qatar as an early member of the reconciled Gulf emirates.',
 RO:'Blue, yellow, and red are historic national colours associated with the regions and the movement for Romanian unity.',
@@ -151,5 +150,5 @@ ZM:'Green represents natural resources, red the struggle for freedom, black the 
 ZW:'Green represents agriculture, gold mineral wealth, red liberation, black the people, the bird national heritage, and the star revolutionary aspirations.'
 };
 const FLAG_ARTICLE_NAMES={
-  AE:'the United Arab Emirates',BA:'Bosnia and Herzegovina',BN:'Brunei',BO:'Bolivia',BS:'the Bahamas',CD:'the Democratic Republic of the Congo',CG:'the Republic of the Congo',CI:'Ivory Coast',CV:'Cape Verde',CZ:'the Czech Republic',DO:'the Dominican Republic',FM:'the Federated States of Micronesia',GB:'the United Kingdom',GM:'the Gambia',KP:'North Korea',KR:'South Korea',LA:'Laos',MD:'Moldova',MK:'North Macedonia',MM:'Myanmar',PS:'Palestine',RU:'Russia',SZ:'Eswatini',TL:'East Timor',TR:'Turkey',TW:'Taiwan',TZ:'Tanzania',US:'the United States',VA:'Vatican City',VE:'Venezuela',VN:'Vietnam'
+  AE:'the United Arab Emirates',BA:'Bosnia and Herzegovina',BN:'Brunei',BO:'Bolivia',BS:'the Bahamas',CD:'the Democratic Republic of the Congo',CG:'the Republic of the Congo',CI:'Ivory Coast',CV:'Cape Verde',CZ:'the Czech Republic',DO:'the Dominican Republic',FM:'the Federated States of Micronesia',GB:'the United Kingdom',GM:'the Gambia',KP:'North Korea',KR:'South Korea',LA:'Laos',MD:'Moldova',MK:'North Macedonia',MM:'Myanmar',RU:'Russia',SZ:'Eswatini',TL:'East Timor',TR:'Turkey',TW:'Taiwan',TZ:'Tanzania',US:'the United States',VA:'Vatican City',VE:'Venezuela',VN:'Vietnam'
 };

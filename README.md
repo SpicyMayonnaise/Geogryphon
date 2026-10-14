@@ -43,5 +43,5 @@ Invalid jumps are ignored and logged to the console.
 ## Data notes
 
 - Populations are rounded estimates (about 2024). Population questions skip countries within 6% of a band edge.
-- "Playable" = the 193 UN members plus Vatican City, Palestine and Taiwan. Territories appear in Flag mode only.
+- "Playable" = the 193 UN members plus Vatican City and Taiwan. Territories appear in Flag mode only.
 - Language lists are official/co-official languages, trimmed to avoid obscure or disputed entries.
