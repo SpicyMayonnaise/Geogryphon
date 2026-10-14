@@ -35,9 +35,9 @@ const Archive = (() => {
     const name = document.createElement('h3');
     name.textContent = countryName(c);
     const rows = [
-      infoRow('archive.capital', c.capital),
-      infoRow('archive.continent', c.continent),
-      infoRow('archive.languages', c.languages.join(' / ')),
+      infoRow('archive.capital', capitalName(c)),
+      infoRow('archive.continent', continentName(c.continent)),
+      infoRow('archive.languages', c.languages.map(languageName).join(' / ')),
       infoRow('archive.population', formatPopulation(c.population))
     ];
     pop.replaceChildren(flag, name, ...rows);
@@ -115,7 +115,7 @@ const Archive = (() => {
       const chip = document.createElement('button');
       chip.type = 'button';
       chip.className = 'archiveChip';
-      chip.textContent = name || t('archive.all');
+      chip.textContent = name ? continentName(name) : t('archive.all');
       chip.setAttribute('aria-pressed', String(name === continent));
       chip.addEventListener('click', () => { continent = name; renderFilters(); filter(); });
       return chip;
@@ -136,7 +136,7 @@ const Archive = (() => {
     const sorted = [...DATA].sort((a, b) => countryName(a).localeCompare(countryName(b), currentLang));
     for (const c of sorted) {
       const el = makeCard(c);
-      cards.push({ el, country: c, text: [c.name, countryName(c), c.capital, c.continent, ...c.languages].join(' ').toLowerCase() });
+      cards.push({ el, country: c, text: [c.name, countryName(c), c.capital, capitalName(c), c.continent, continentName(c.continent), ...c.languages, ...c.languages.map(languageName)].join(' ').toLowerCase() });
       el.addEventListener('click', () => toggle(el));
       el.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') place(el); });
       el.addEventListener('focus', () => place(el));

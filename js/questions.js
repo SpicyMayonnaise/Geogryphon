@@ -13,16 +13,16 @@ function nearPopulationEdge(p){return[1e6,5e6,15e6,50e6,100e6].some(e=>Math.abs(
    To add a category, add a row here. */
 const QUESTION_TYPES=[
   {category:'language',groups:cp=>[...new Set(cp.flatMap(c=>c.languages||[]))],match:(c,g)=>(c.languages||[]).includes(g),
-   single:(ct,g)=>t('q.languageSingle',{continent:ct,group:g}),multi:(ct,g,n)=>t('q.languageMulti',{count:n,continent:ct,group:g})},
+   single:(ct,g)=>t('q.languageSingle',{continent:continentName(ct),group:languageName(g)}),multi:(ct,g,n)=>t('q.languageMulti',{count:n,continent:continentName(ct),group:languageName(g)})},
   {category:'population',groups:()=>populationBands().map(b=>b.label),match:(c,g)=>{let b=populationBands().find(x=>x.label===g);return c.population>0&&!nearPopulationEdge(c.population)&&c.population>=b.min&&c.population<b.max},
-   single:(ct,g)=>t('q.populationSingle',{continent:ct,group:t(`band.${g}`)}),multi:(ct,g,n)=>t('q.populationMulti',{count:n,continent:ct,group:t(`band.${g}`)})}
+   single:(ct,g)=>t('q.populationSingle',{continent:continentName(ct),group:t(`band.${g}`)}),multi:(ct,g,n)=>t('q.populationMulti',{count:n,continent:continentName(ct),group:t(`band.${g}`)})}
 ];
 let _cq=null,_cqKey='';
 function candidateQuestions(){
-  let pool=triviaPool(),key=`${expertise}|${pool.length}|${pool.filter(c=>c.population).length}|${pool.filter(c=>c.languages?.length).length}|${pool.filter(c=>c.continent).length}`;
+  let pool=triviaPool(),key=`${currentLang}|${expertise}|${pool.length}|${pool.filter(c=>c.population).length}|${pool.filter(c=>c.languages?.length).length}|${pool.filter(c=>c.continent).length}`;
   if(_cq&&_cqKey===key)return _cq;
   let out=[];
-  pool.filter(c=>c.capital).forEach(c=>out.push({category:'capital',multi:false,required:1,eligible:[c.code],text:t('q.capital',{capital:c.capital}),signature:`capital:${c.code}`}));
+  pool.filter(c=>c.capital).forEach(c=>out.push({category:'capital',multi:false,required:1,eligible:[c.code],text:t('q.capital',{capital:capitalName(c)}),signature:`capital:${c.code}`}));
   let enriched=pool.filter(c=>c.continent),continents=[...new Set(enriched.map(c=>c.continent))];
   for(let continent of continents){let cp=enriched.filter(c=>c.continent===continent);
     for(let t of QUESTION_TYPES)for(let g of t.groups(cp)){
@@ -55,5 +55,5 @@ function nextTriviaQuestion(){
   }
   let options=shuffle(triviaPool().filter(x=>x.capital&&!questionHistory.includes(`capital:${x.code}`)));if(!options.length)options=shuffle(triviaPool().filter(x=>x.capital));
   let c=options[0];if(!c)throw new Error('No valid trivia questions are available.');
-  return finishQuestion({category:'capital',multi:false,required:1,eligible:[c.code],text:t('q.capital',{capital:c.capital}),signature:`capital:${c.code}`})
+  return finishQuestion({category:'capital',multi:false,required:1,eligible:[c.code],text:t('q.capital',{capital:capitalName(c)}),signature:`capital:${c.code}`})
 }

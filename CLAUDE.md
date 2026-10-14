@@ -108,7 +108,8 @@ Rules to keep:
 - Language: all UI text goes through `t()`; static HTML uses `data-i18n`, `-ph`, `-title`, `-aria`. Never hardcode
   UI text in JS or HTML. Packs: `js/lang/en.js`, `js/lang/he.js` (Hebrew, `meta.dir: 'rtl'`). Both must have the same
   keys and placeholders. Country names: `countryName(c)` reads `LANG_PACKS.<lang>.countries[code]` (Hebrew has all
-  247); always use it for display, never `c.name`. Capitals, languages and continents stay English.
+  247); always use it for display, never `c.name`. Same for `capitalName(c)`, `languageName(name)` and
+  `continentName(name)` (Hebrew data in `js/lang/he-data.js`). The data rows stay English; translate only for display.
 - RTL: use `inset-inline-*` and `text-align:start`, not left/right. Exception: the leaderboard button stays physically
   right so it never covers the amCharts logo (bottom-left). Mixed-direction text (answer tiles) uses `<bdi>`.
 - Colour blind: `html.cb` swaps `--good/--bad` to `--cb-good/--cb-bad` (blue/orange) and applies the SVG

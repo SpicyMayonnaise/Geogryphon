@@ -31,6 +31,11 @@ function applyI18n(root = document) {
 // A country's display name in the current language (pack `countries` by ISO code), else the data's English name.
 const countryName = c => (c && (LANG_PACKS[currentLang]?.countries?.[c.code] ?? c.name)) || '';
 
+// Country data in the current language (pack `capitals` by ISO code; `languages`, `continents` by English name).
+const capitalName = c => (c && (LANG_PACKS[currentLang]?.capitals?.[c.code] ?? c.capital)) || '';
+const languageName = name => LANG_PACKS[currentLang]?.languages?.[name] ?? name;
+const continentName = name => LANG_PACKS[currentLang]?.continents?.[name] ?? name;
+
 const languageReady = code => !!LANG_PACKS[code] && !!LANGUAGES.find(l => l.code === code)?.ready;
 
 // Switches the language, stores it and re-renders static text. Returns false for a language that is not ready.

@@ -1,5 +1,5 @@
 /* Hebrew language pack (right to left). Same keys as js/lang/en.js; a missing key falls back to English.
-   Country names are translated in LANG_PACKS.he.countries; capitals, languages and continents stay in English. */
+   Country names are in LANG_PACKS.he.countries below; capitals, languages and continents are in he-data.js. */
 
 LANG_PACKS.he = {
   meta: { name: 'עברית', dir: 'rtl' },
@@ -91,12 +91,12 @@ LANG_PACKS.he = {
   'sound.mute': 'השתקת צלילים (M)',
   'sound.unmute': 'הפעלת צלילים (M)',
 
-  // trivia questions ({continent} and {group} come from the data, in English)
+  // trivia questions ({continent} and {group} are translated through he-data.js)
   'q.capital': 'לאיזו מדינה {capital} היא הבירה?',
-  'q.languageSingle': 'איזו מדינה ב־{continent} מדברת {group} כשפה רשמית?',
-  'q.languageMulti': 'בחרו {count} מדינות ב־{continent} שבהן {group} היא שפה רשמית.',
-  'q.populationSingle': 'לאיזו מדינה ב־{continent} יש אוכלוסייה של {group}?',
-  'q.populationMulti': 'בחרו {count} מדינות ב־{continent} עם אוכלוסייה של {group}.',
+  'q.languageSingle': 'איזו מדינה ב{continent} מדברת {group} כשפה רשמית?',
+  'q.languageMulti': 'בחרו {count} מדינות ב{continent} שבהן {group} היא שפה רשמית.',
+  'q.populationSingle': 'לאיזו מדינה ב{continent} יש אוכלוסייה של {group}?',
+  'q.populationMulti': 'בחרו {count} מדינות ב{continent} עם אוכלוסייה של {group}.',
   'band.under1m': 'פחות ממיליון',
   'band.1to5m': 'בין מיליון ל־5 מיליון',
   'band.5to15m': 'בין 5 ל־15 מיליון',
