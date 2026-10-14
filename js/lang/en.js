@@ -17,10 +17,10 @@ LANG_PACKS.en = {
   'menu.archive': 'Open the Archive',
   'menu.settings': 'Settings',
 
-  'diff.easy': 'Easy', 'diff.easySub': '20 seconds',
-  'diff.normal': 'Normal', 'diff.normalSub': '10 seconds',
-  'diff.hard': 'Hard', 'diff.hardSub': '5 seconds',
-  'diff.extreme': 'Extreme', 'diff.extremeSub': '3 seconds',
+  'diff.easy': 'Easy', 'diff.easySub': '1 minute',
+  'diff.normal': 'Normal', 'diff.normalSub': '30 seconds',
+  'diff.hard': 'Hard', 'diff.hardSub': '10 seconds',
+  'diff.extreme': 'Extreme', 'diff.extremeSub': '5 seconds',
   'diff.free': 'Free Play', 'diff.freeSub': 'No timer',
 
   'exp.novice': 'Novice', 'exp.noviceSub': 'Top 70 countries',

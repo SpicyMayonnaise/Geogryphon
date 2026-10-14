@@ -82,7 +82,7 @@ Rules to keep:
   around its centre and are raised to the top layer (`mapGeoJSON`, `onTop`). Desktop: VA and MC to 0.2°, max
   zoom 64. Phones (`isPhone()`): every playable country under 0.35° to 0.35°, max zoom 128 (~40px at max zoom).
   No markers or circles (user rejected them).
-- Portrait maps (phones) start zoomed so the inhabited world fills the height (`homeZoom`, max 4x).
+- Every screen, phones included, starts and resets at zoom 1 (whole world). Zoom-to-fill on phones was removed (user).
 - The amCharts logo stays visible (`KEEP_AMCHARTS_LOGO = true`): the free licence requires it.
 - amCharts' own wheel zoom is off (`wheelY: 'none'`). `onWheel` zooms in proportion to the scroll distance
   (one 100px notch = one `ZOOM_STEP`) and ignores non-cancelable wheel events, which are page-scroll momentum.

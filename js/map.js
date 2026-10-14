@@ -288,22 +288,9 @@ const MapView = (() => {
   /* ---------- view controls ---------- */
   const zoomIn = () => chart?.zoomIn();
   const zoomOut = () => chart?.zoomOut();
-  // On a tall (portrait) map, zoom 1 shows the world as a thin strip. Start zoomed so the inhabited world
-  // (about 56°S to 83°N) fills the height instead; the sides are reached by dragging.
-  const PORTRAIT_MAX_ZOOM = 4;
-  function homeZoom() {
-    const el = $('mapArea'), w = el.clientWidth, h = el.clientHeight;
-    if (!chart || !w || h <= w) return 1;
-    const level = chart.get('zoomLevel', 1);
-    const top = chart.convert({ longitude: 0, latitude: 83 }), bottom = chart.convert({ longitude: 0, latitude: -56 });
-    const worldH = Math.abs(bottom.y - top.y) / level; // map height at zoom 1
-    if (!(worldH > 0)) return 1;
-    return Math.max(1, Math.min(PORTRAIT_MAX_ZOOM, h / worldH));
-  }
+  // Every screen, phones included, starts with the whole world in view (zoom 1).
   function resetView(immediate = false) {
-    const z = homeZoom();
-    // Zoomed in on a phone, start over Europe and Africa; at zoom 1 the whole world is centred as before.
-    chart?.zoomToGeoPoint(z > 1 ? { longitude: 15, latitude: 20 } : { longitude: 0, latitude: 12 }, z, true, immediate ? 0 : 500);
+    chart?.zoomToGeoPoint({ longitude: 0, latitude: 12 }, 1, true, immediate ? 0 : 500);
   }
   // amCharts records the map's centre (which the drag limits are measured from) only when it fits the map.
   // The chart is built while the map is hidden (0x0), so that fit is skipped and dragging gets clamped
