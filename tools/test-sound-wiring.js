@@ -25,7 +25,7 @@ function setup(over = {}) {
     setState: s => { ctx.state = s; return true; },
     stale: rid => rid !== ctx.runId,
     lose: (...a) => { ctx.lost = a; },
-    $: el, setText() {}, show() {}, token: () => '', t: key => key, showReaction() {}, clearSelections() {}, later() {},
+    $: el, setText() {}, show() {}, token: () => '', t: key => key, countryName: c => c?.name || '', showReaction() {}, clearSelections() {}, later() {},
     askNext() {}, markAnswers() {}, updateSelectionUI() {}, MapView: { select() {} },
     readScores: () => [], scoreKey: () => 'k', LS: { setItem() {} }, renderBoard() {},
     ...over
