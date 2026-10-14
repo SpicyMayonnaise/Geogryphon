@@ -3,6 +3,8 @@
    gesture (browsers block audio until then), or while muted, Sound simply does nothing. */
 
 const SOUND_MUTE_KEY = 'geogryphon.muted';
+const SOUND_VOLUME_KEY = 'geogryphon.volume';
+const MASTER_GAIN = 0.6; // full volume (slider at 100%)
 const HOVER_GAP_MS = 40;
 
 const clamp01 = x => Math.min(1, Math.max(0, Number(x) || 0));
@@ -60,6 +62,7 @@ const SOUND_RECIPES = {
 const Sound = (() => {
   let ctx = null, master = null, noise = null, broken = false;
   let muted = LS.getItem(SOUND_MUTE_KEY) === '1';
+  let volume = (() => { const v = Number(LS.getItem(SOUND_VOLUME_KEY)); return LS.getItem(SOUND_VOLUME_KEY) !== null && v >= 0 && v <= 1 ? v : 1; })();
   let lastHover = -Infinity, lastTick = null, wrongVoices = [], tickVoices = [];
 
   // Runs on every user gesture: creates the audio context on the first one and wakes it again if the
@@ -72,7 +75,7 @@ const Sound = (() => {
         if (!Ctx) { broken = true; return; }
         ctx = new Ctx();
         master = ctx.createGain();
-        master.gain.value = 0.6;
+        master.gain.value = MASTER_GAIN * volume;
         master.connect(ctx.destination);
       }
       if (ctx.state !== 'running') ctx.resume().catch(() => {});
@@ -157,6 +160,13 @@ const Sound = (() => {
       tickVoices = [];
     },
     isMuted: () => muted,
+    // Volume 0..1 from the settings slider; muting is separate and keeps the volume.
+    getVolume: () => volume,
+    setVolume(v) {
+      volume = Math.max(0, Math.min(1, Number(v) || 0));
+      LS.setItem(SOUND_VOLUME_KEY, String(volume));
+      if (master) master.gain.value = MASTER_GAIN * volume;
+    },
     setMuted(on) {
       muted = !!on;
       LS.setItem(SOUND_MUTE_KEY, muted ? '1' : '0');

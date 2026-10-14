@@ -17,14 +17,15 @@ function setup(over = {}) {
     parentElement: { classList: { add() {}, remove() {} }, offsetWidth: 0 }
   });
   const ctx = {
-    played, state: 'asking', mode: 'map', runId: 1, score: 0, maxTime: 10, scoreSaved: false,
+    played, state: 'asking', mode: 'map', difficulty: 'normal',
+    isFreePlay: () => ctx.difficulty === 'free', timeLeft: () => (ctx.difficulty === 'free' ? .5 : ctx.Clock.ratio()), runId: 1, score: 0, maxTime: 10, scoreSaved: false,
     target: { code: 'KW' }, questionSpec: { required: 2 }, selectedIds: new Set(),
     Sound: { play: (name, ...rest) => played.push([name, ...rest]) },
     Clock: { r: 0.8, ratio() { return this.r; }, stop() {}, penalize: () => 5, start(s, cb) { ctx.expire = cb; } },
     setState: s => { ctx.state = s; return true; },
     stale: rid => rid !== ctx.runId,
     lose: (...a) => { ctx.lost = a; },
-    $: el, setText() {}, show() {}, token: () => '', showReaction() {}, clearSelections() {}, later() {},
+    $: el, setText() {}, show() {}, token: () => '', t: key => key, countryName: c => c?.name || '', showReaction() {}, clearSelections() {}, later() {},
     askNext() {}, markAnswers() {}, updateSelectionUI() {}, MapView: { select() {} },
     readScores: () => [], scoreKey: () => 'k', LS: { setItem() {} }, renderBoard() {},
     ...over
@@ -37,6 +38,16 @@ const sounds = c => c.played.map(p => p[0]);
 
 // Correct: intensity = share of time left.
 { const c = setup(); c.Clock.r = 0.8; c.onCorrect(1, 700); assert.deepStrictEqual(c.played, [['correct', 0.8]]); }
+
+// Free Play: no clock, so correct and wrong play at middle intensity and a wrong map pick never loses.
+{
+  const c = setup({ difficulty: 'free' });
+  c.onCorrect(1, 700);
+  c.state = 'asking';
+  c.applyPenalty();
+  assert.deepStrictEqual(c.played, [['correct', 0.5], ['wrong', 0.5]]);
+  assert.ok(!c.lost, 'Free Play wrong pick does not end the run');
+}
 
 // Map/Trivia wrong: intensity = share of time used, read before the penalty.
 {

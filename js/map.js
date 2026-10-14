@@ -105,6 +105,51 @@ const RevealCircles = (() => {
   return { start, stop };
 })();
 
+// Countries too small to tap even at full zoom (Vatican City is ~1px, and Italy's shape has no hole for it).
+// Their real outline is scaled up around its own centre until its longest side spans the size below, and they
+// are raised to the top layer so a neighbour never covers them. Exaggerated, not moved; no markers.
+// Desktop: only Vatican City and Monaco. Phones (fingers are bigger): every country smaller than the phone size.
+const ENLARGED_COUNTRIES = ['VA', 'MC'];
+const ENLARGED_SPAN_DEG = 0.2;
+const PHONE_ENLARGED_SPAN_DEG = 0.35;
+const MAX_ZOOM = 64, PHONE_MAX_ZOOM = 128;
+const isPhone = () => matchMedia('(max-width: 620px), (pointer: coarse) and (max-width: 900px)').matches;
+
+// Longest side of a GeoJSON geometry's bounding box, in degrees.
+function geometrySpan(geometry) {
+  const polys = geometry.type === 'Polygon' ? [geometry.coordinates] : geometry.coordinates;
+  const pts = polys.flat(2);
+  const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+  return Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
+}
+
+// A copy of a GeoJSON geometry scaled around its bounding-box centre so its longest side is spanDeg degrees.
+function enlargeGeometry(geometry, spanDeg) {
+  const polys = geometry.type === 'Polygon' ? [geometry.coordinates] : geometry.coordinates;
+  const pts = polys.flat(2);
+  const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+  const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+  const k = spanDeg / Math.max(maxX - minX, maxY - minY, 1e-9);
+  if (k <= 1) return geometry;
+  const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+  const scaled = polys.map(poly => poly.map(ring => ring.map(([x, y]) => [cx + (x - cx) * k, cy + (y - cy) * k])));
+  return { type: geometry.type, coordinates: geometry.type === 'Polygon' ? scaled[0] : scaled };
+}
+// The map's GeoJSON with tiny countries enlarged. Returns the ids it enlarged, to raise them to the top layer.
+function mapGeoJSON(phone) {
+  const geo = am5geodata_worldLow, span = phone ? PHONE_ENLARGED_SPAN_DEG : ENLARGED_SPAN_DEG;
+  const grow = f => phone
+    ? countryByCode(f.id)?.playable && geometrySpan(f.geometry) < span
+    : ENLARGED_COUNTRIES.includes(f.id);
+  const enlarged = [];
+  const features = geo.features.map(f => {
+    if (!grow(f)) return f;
+    enlarged.push(f.id);
+    return { ...f, geometry: enlargeGeometry(f.geometry, span) };
+  });
+  return { geoJSON: { ...geo, features }, enlarged };
+}
+
 const MapView = (() => {
   // Colours come from the CSS tokens (css/style.css :root), read once when the chart is built.
   let C = null;
@@ -117,7 +162,7 @@ const MapView = (() => {
   // One mouse-wheel notch (100px) zooms one ZOOM_STEP; smaller touchpad scrolls zoom proportionally less.
   const WHEEL_ZOOM_PER_PX = Math.log(ZOOM_STEP) / 100;
 
-  let root = null, chart = null, series = null;
+  let root = null, chart = null, series = null, onTop = [];
   let fittedSize = '';
   let wheelTarget = 0, lastWheel = 0, lastPageScroll = 0;
   let flashes = [];
@@ -132,6 +177,8 @@ const MapView = (() => {
     typeof am5 !== 'undefined' && typeof am5map !== 'undefined' && typeof am5geodata_worldLow !== 'undefined';
 
   function init(h) { hooks = { ...hooks, ...h }; }
+  // Colour tokens changed (colour blind mode): read them again on next use.
+  function refreshPalette() { C = null; }
 
   function polygonsFor(ids) {
     const out = [];
@@ -170,8 +217,7 @@ const MapView = (() => {
     p.set('forceInactive', false);
     p.states.apply('default');
     p.setAll({ fill: am5.color(palette().land), stroke: am5.color(palette().line), strokeWidth: .8 });
-  }
-  function paintSelection(p, on) {
+  }  function paintSelection(p, on) {
     p.set('active', !!on);
     if (on) {
       p.states.apply('active');
@@ -242,8 +288,22 @@ const MapView = (() => {
   /* ---------- view controls ---------- */
   const zoomIn = () => chart?.zoomIn();
   const zoomOut = () => chart?.zoomOut();
+  // On a tall (portrait) map, zoom 1 shows the world as a thin strip. Start zoomed so the inhabited world
+  // (about 56°S to 83°N) fills the height instead; the sides are reached by dragging.
+  const PORTRAIT_MAX_ZOOM = 4;
+  function homeZoom() {
+    const el = $('mapArea'), w = el.clientWidth, h = el.clientHeight;
+    if (!chart || !w || h <= w) return 1;
+    const level = chart.get('zoomLevel', 1);
+    const top = chart.convert({ longitude: 0, latitude: 83 }), bottom = chart.convert({ longitude: 0, latitude: -56 });
+    const worldH = Math.abs(bottom.y - top.y) / level; // map height at zoom 1
+    if (!(worldH > 0)) return 1;
+    return Math.max(1, Math.min(PORTRAIT_MAX_ZOOM, h / worldH));
+  }
   function resetView(immediate = false) {
-    chart?.zoomToGeoPoint({ longitude: 0, latitude: 12 }, 1, true, immediate ? 0 : 500);
+    const z = homeZoom();
+    // Zoomed in on a phone, start over Europe and Africa; at zoom 1 the whole world is centred as before.
+    chart?.zoomToGeoPoint(z > 1 ? { longitude: 15, latitude: 20 } : { longitude: 0, latitude: 12 }, z, true, immediate ? 0 : 500);
   }
   // amCharts records the map's centre (which the drag limits are measured from) only when it fits the map.
   // The chart is built while the map is hidden (0x0), so that fit is skipped and dragging gets clamped
@@ -273,7 +333,7 @@ const MapView = (() => {
     // A non-cancelable wheel event belongs to a page scroll that is still coasting onto the map. Leave it be.
     if (!e.cancelable || performance.now() - lastPageScroll < 200) return;
     const level = chart.get('zoomLevel', 1);
-    const min = chart.get('minZoomLevel', 1), max = chart.get('maxZoomLevel', 24);
+    const min = chart.get('minZoomLevel', 1), max = chart.get('maxZoomLevel', MAX_ZOOM);
     let dy = e.deltaY;
     if (e.deltaMode === 1) dy *= 33;                                  // lines
     else if (e.deltaMode === 2) dy *= e.currentTarget.clientHeight;   // pages
@@ -290,8 +350,15 @@ const MapView = (() => {
     if (wheelTarget === level) return;
     chart.zoomToPoint(root.documentPointToRoot({ x: e.clientX, y: e.clientY }), wheelTarget, false, 120);
   }
+  // Tooltips show {displayName}: the country's name in the current language (set again each game start).
+  function renameCountries() {
+    series?.mapPolygons.each(p => {
+      const ctx = p.dataItem?.dataContext, c = countryByCode(idOf(p));
+      if (ctx) ctx.displayName = c ? countryName(c) : ctx.name;
+    });
+  }
   function setTooltips(on) {
-    series?.mapPolygons.template.set('tooltipText', on ? '{name}' : '');
+    series?.mapPolygons.template.set('tooltipText', on ? '{displayName}' : '');
   }
   function waitReady(timeoutMs = 8000) {
     return Promise.race([ready, new Promise(r => setTimeout(r, timeoutMs))]);
@@ -304,7 +371,7 @@ const MapView = (() => {
     if (!KEEP_AMCHARTS_LOGO) root._logo?.dispose();
     chart = root.container.children.push(am5map.MapChart.new(root, {
       panX: 'translateX', panY: 'translateY', wheelX: 'none', wheelY: 'none', pinchZoom: true,
-      zoomStep: ZOOM_STEP, minZoomLevel: 1, maxZoomLevel: 24, projection: am5map.geoNaturalEarth1()
+      zoomStep: ZOOM_STEP, minZoomLevel: 1, maxZoomLevel: isPhone() ? PHONE_MAX_ZOOM : MAX_ZOOM, projection: am5map.geoNaturalEarth1()
     }));
     $('mapArea').addEventListener('wheel', onWheel, { passive: false });
     window.addEventListener('scroll', () => { lastPageScroll = performance.now(); }, { passive: true });
@@ -312,18 +379,26 @@ const MapView = (() => {
     new ResizeObserver(() => {
       if (refitIfResized()) root.events.once('frameended', () => resetView(true));
     }).observe($('mapArea'));
-    series = chart.series.push(am5map.MapPolygonSeries.new(root, { geoJSON: am5geodata_worldLow, exclude: ['AQ'] }));
+    const { geoJSON, enlarged } = mapGeoJSON(isPhone());
+    onTop = enlarged;
+    series = chart.series.push(am5map.MapPolygonSeries.new(root, { geoJSON, exclude: ['AQ'] }));
 
     series.events.on('datavalidated', () => {
       const ids = new Set();
-      series.mapPolygons.each(p => { const id = idOf(p); if (id && countryByCode(id)) ids.add(id); });
+      series.mapPolygons.each(p => {
+        const id = idOf(p);
+        if (id && countryByCode(id)) ids.add(id);
+        else p.setAll({ tooltipText: '', cursorOverStyle: 'default' }); // not in the game: plain land
+      });
+      onTop.forEach(id => polygonFor(id)?.toFront());
+      renameCountries();
       hooks.onData(ids);
       if (resolveReady) { resolveReady(); resolveReady = null; }
     });
 
     const tpl = series.mapPolygons.template;
     tpl.setAll({
-      tooltipText: hooks.showNames() ? '{name}' : '', interactive: true,
+      tooltipText: hooks.showNames() ? '{displayName}' : '', interactive: true,
       fill: am5.color(palette().land), stroke: am5.color(palette().line), strokeWidth: .8
     });
     tpl.states.create('hover', { fill: am5.color(palette().hover) });
@@ -338,9 +413,9 @@ const MapView = (() => {
       if (!c) return;
       const panel = $('hoverFlag'), img = $('hoverFlagImg');
       panel.dataset.code = id;
-      setText('hoverFlagName', hooks.showNames() ? c.name : '');
+      setText('hoverFlagName', hooks.showNames() ? countryName(c) : '');
       panel.classList.add('show');
-      loadFlag(img, id, { alt: `${c.name} flag`, timeout: 1800 }).then(() => {
+      loadFlag(img, id, { alt: countryName(c), timeout: 1800 }).then(() => {
         if (panel.dataset.code !== id) panel.classList.remove('show');
       });
     });
@@ -359,7 +434,7 @@ const MapView = (() => {
   }
 
   return {
-    available, init, ensure, ready, waitReady, setTooltips,
+    available, init, refreshPalette, renameCountries, ensure, ready, waitReady, setTooltips,
     select, highlight, clearHighlight, skipReveal,
     zoomIn, zoomOut, resetView, resizeAndReset
   };

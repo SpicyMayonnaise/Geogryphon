@@ -9,8 +9,7 @@ no framework, no bundler, no server. The only external code is amCharts (map) lo
 - Run: open `index.html` in a browser. Map and trivia modes need internet for amCharts; flags need it for images.
   Fonts (Fredoka, Nunito) come from Google Fonts; offline the game falls back to `system-ui`.
 - Preview server: `node .claude/serve.js` serves the folder on http://localhost:8765 (`.claude/launch.json`).
-- One-file build: `python3 build_single.py` writes `geogryphon_single.html`. It is generated, so never edit it by hand.
-  Python is not installed on the main dev machine, so `geogryphon_single.html` is stale (pre-V14) until rebuilt.
+- There is no one-file build any more (`build_single.py` and `geogryphon_single.html` were removed on purpose).
 - There is no test runner. Checks are plain Node scripts in `tools/` (exit 1 on failure):
   - after CSS edits: `node tools/check-tokens.js` (no hardcoded design values) and `node tools/contrast.js` (WCAG AA)
   - after JS edits: `node --check <file>`, `node tools/test-tokens-js.js`, `node tools/test-answer-states.js`,
@@ -43,11 +42,15 @@ scope, and **load order in `index.html` matters**.
 | File | Purpose |
 |---|---|
 | `js/util.js` | `$`, `setText`, `show`/`hide`, `shuffle`, safe storage `LS`, `showReaction` |
+| `js/i18n.js` | `t('key', vars)`, `applyI18n()`, `setLanguage()`, the `LANGUAGES` list |
+| `js/lang/en.js` | English language pack: every UI string. New language = new file + `ready: true` in `LANGUAGES` |
 | `js/sound.js` | `Sound`: generated sound effects (Web Audio), mute; the only file that touches audio |
 | `js/data/countries.js` | Bundled country rows and the expertise tiers (the data source of truth) |
+| `js/settings.js` | `Settings`: colour blind mode, loads stored language; volume lives in `Sound` |
 | `js/data/flag-study.js` | Study Mode flag-meaning text. Large, data only: do not read it whole |
 | `js/countries.js` | Builds `DATA` from the rows, the pools per mode, optional population refresh |
 | `js/flags.js` | Flag image loading with fallback sources; Study Mode helpers |
+| `js/archive.js` | `Archive`: card grid of every flag, search, continent chips, pop-out details |
 | `js/questions.js` | Trivia generator (`QUESTION_TYPES`) and the category-weighted picker |
 | `js/map.js` | `MapView`: the only file that touches amCharts |
 | `js/scores.js` | Local top-10 leaderboard in localStorage |
@@ -73,8 +76,13 @@ Rules to keep:
   (`RevealCircles`, `circleAround`). The ring is re-projected every frame from the country's main landmass
   (`largestRing` + `trimAntimeridian`) via `chart.convert`, so it follows pan/zoom; min radius 24px, max 5 rings.
   `cleanup()` stops the flash animations and empties the layer. There is no arrow any more (removed on purpose).
-- No reduced-motion handling for these animations until the game has a settings menu (user decision).
+- No reduced-motion handling for these animations yet (user decision; the settings menu could hold it).
 
+- Tiny countries: Italy's shape has no hole for Vatican City. Tiny countries get their real outline scaled up
+  around its centre and are raised to the top layer (`mapGeoJSON`, `onTop`). Desktop: VA and MC to 0.2°, max
+  zoom 64. Phones (`isPhone()`): every playable country under 0.35° to 0.35°, max zoom 128 (~40px at max zoom).
+  No markers or circles (user rejected them).
+- Portrait maps (phones) start zoomed so the inhabited world fills the height (`homeZoom`, max 4x).
 - The amCharts logo stays visible (`KEEP_AMCHARTS_LOGO = true`): the free licence requires it.
 - amCharts' own wheel zoom is off (`wheelY: 'none'`). `onWheel` zooms in proportion to the scroll distance
   (one 100px notch = one `ZOOM_STEP`) and ignores non-cancelable wheel events, which are page-scroll momentum.
@@ -83,6 +91,30 @@ Rules to keep:
   dragging down or right gets blocked when zoomed in.
 - When testing in a hidden browser pane, frames are throttled (~2 fps), so amCharts animations and re-fits
   land late. Wait longer or take a screenshot before reading chart state.
+
+## Difficulty and phone layout
+
+- Free Play (`difficulty === 'free'`, `isFreePlay()`): no clock, no time penalty (a wrong map pick only says
+  "Wrong! Try again"); a wrong flag still ends the run. It has its own Top 10 (score key includes difficulty).
+- At 1200px and below, the page never scrolls during a run (`html/body:has(#game:not(.hidden))`), and the
+  leaderboard is a bottom sheet opened by the 🏆 `#boardBtn` (`setBoardOpen` in main.js).
+- Flag answer tiles: the hover ring only shows for real mouse hover, and not until the mouse moves after a new
+  round (`.answers.fresh`), so it never carries over to the next round's tile.
+
+## Settings, language and Archive
+
+- The settings window (⚙️) and the Archive (📚) open only from the menu corner, next to Mute.
+- Volume: `Sound.setVolume(0..1)` scales the master gain; stored in `LS` `geogryphon.volume`. Mute stays separate.
+- Language: all UI text goes through `t()`; static HTML uses `data-i18n`, `-ph`, `-title`, `-aria`. Never hardcode
+  UI text in JS or HTML. Packs: `js/lang/en.js`, `js/lang/he.js` (Hebrew, `meta.dir: 'rtl'`). Both must have the same
+  keys and placeholders. Country names: `countryName(c)` reads `LANG_PACKS.<lang>.countries[code]` (Hebrew has all
+  247); always use it for display, never `c.name`. Same for `capitalName(c)`, `languageName(name)` and
+  `continentName(name)` (Hebrew data in `js/lang/he-data.js`). The data rows stay English; translate only for display.
+- RTL: use `inset-inline-*` and `text-align:start`, not left/right. Exception: the leaderboard button stays physically
+  right so it never covers the amCharts logo (bottom-left). Mixed-direction text (answer tiles) uses `<bdi>`.
+- Colour blind: `html.cb` swaps `--good/--bad` to `--cb-good/--cb-bad` (blue/orange) and applies the SVG
+  `#daltonize` filter (red-green, in `index.html`) to flag images. `MapView.refreshPalette()` and the clock
+  re-read colours.
 
 ## Sound (js/sound.js)
 
@@ -93,15 +125,14 @@ Rules to keep:
   clock). `Clock` calls `Sound.tick` every frame in the red zone (last 25%); `Sound` plays once per new second.
 - Hover/click come from delegated listeners in `main.js` on `button, .difficulty label, .answer, .mapControl`;
   touch never plays hover. New buttons get sounds automatically.
-- Mute: `.muteBtn` buttons and the `M` key; stored in `LS` key `geogryphon.muted`. A volume slider waits for the
-  settings menu.
+- Mute: `.muteBtn` buttons and the `M` key; stored in `LS` key `geogryphon.muted`. The volume slider is in the settings menu.
 - Tuning by ear: `tools/soundboard.html` (local only, not committed) plays every recipe at 0, 0.5 and 1.
 
 ## Data and question rules
 
 - Country rows: `code | ISO3 | name | capital | continent | languages;separated | population in thousands | playable 1/0`.
   Edit them in `js/data/countries.js`.
-- `playable` = the 193 UN members plus Vatican City, Palestine and Taiwan. Territories appear in Flag mode only.
+- `playable` = the 193 UN members plus Vatican City and Taiwan. Palestine was removed on purpose (does not fit the game). Territories appear in Flag mode only.
 - Populations are rounded estimates. Population questions skip countries within 6% of a band edge.
 - Online refresh only updates populations. It must never change names, capitals, languages or `playable`.
 - Trivia mix is set by `CATEGORY_WEIGHTS` in `js/questions.js` (capital 40%, language 30%, population 30%).

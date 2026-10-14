@@ -2,7 +2,7 @@
    One row per ISO country or territory:
      code | ISO3 | name | capital | continent | official languages (;) | population in thousands | playable (1/0)
    Populations are rounded estimates (about 2024). "Playable" marks sovereign states (the 193 UN members,
-   plus Vatican City, Palestine and Taiwan). Territories stay in Flag mode but are skipped by Map and Trivia.
+   plus Vatican City and Taiwan). Territories stay in Flag mode but are skipped by Map and Trivia.
    Optional online refresh (countries.js) can update populations; it never changes anything else. */
 
 const CONTINENT_NAMES = { AF: 'Africa', AS: 'Asia', EU: 'Europe', NA: 'North America', SA: 'South America', OC: 'Oceania', AN: 'Antarctic' };
@@ -189,7 +189,6 @@ PL|POL|Poland|Warsaw|EU|Polish|36600|1
 PM|SPM|Saint Pierre and Miquelon|Saint-Pierre|NA|French|6|0
 PN|PCN|Pitcairn Islands|Adamstown|OC|English|0|0
 PR|PRI|Puerto Rico|San Juan|NA|Spanish;English|3200|0
-PS|PSE|Palestine|Ramallah|AS|Arabic|5500|1
 PT|PRT|Portugal|Lisbon|EU|Portuguese|10400|1
 PW|PLW|Palau|Ngerulmud|OC|English;Palauan|18|1
 PY|PRY|Paraguay|Asunción|SA|Spanish;Guaraní|6900|1
@@ -261,4 +260,4 @@ ZW|ZWE|Zimbabwe|Harare|AF|English;Shona;Ndebele;Chewa;Sotho;Tswana;Venda;Xhosa|1
 /* ---- Expertise tiers: how many of the most familiar countries each level uses ---- */
 const EXPERTISE_LIMITS={novice:70,intermediate:120,pro:180,expert:Infinity};
 // Curated for general-audience familiarity. Tiers are cumulative, and all remaining ISO entries are appended for Expert.
-const FAMILIARITY_CORE=`US GB FR DE IT ES CA AU JP CN IN BR RU MX KR TR EG ZA AR NL CH SE NO DK PL GR PT IE NZ TH IL SA AE ID VN PH MY SG UA AT BE FI CZ RO HU CL CO PE MA DZ NG KE ET GH TN PK BD IR IQ QA KW JO LB IS HR RS BG SK SI LT LV EE GE AM AZ KZ UZ NP LK MM KH MN TW CU JM DO CR PA UY PY BO EC VE GT HN SV NI PR TT BS BB CY LU MT MC VA SM LI AD AL BA ME MK MD BY XK PS SY YE OM BH BT BN TL MV MU SC MG TZ UG RW SN CI CM CD CG AO ZM ZW MZ NA BW LS SZ MW SD SS LY SO DJ ER TG BJ BF ML NE MR GM GN GW SL LR GA GQ CF TD BI KM CV ST`.split(/\s+/);
+const FAMILIARITY_CORE=`US GB FR DE IT ES CA AU JP CN IN BR RU MX KR TR EG ZA AR NL CH SE NO DK PL GR PT IE NZ TH IL SA AE ID VN PH MY SG UA AT BE FI CZ RO HU CL CO PE MA DZ NG KE ET GH TN PK BD IR IQ QA KW JO LB IS HR RS BG SK SI LT LV EE GE AM AZ KZ UZ NP LK MM KH MN TW CU JM DO CR PA UY PY BO EC VE GT HN SV NI PR TT BS BB CY LU MT MC VA SM LI AD AL BA ME MK MD BY XK SY YE OM BH BT BN TL MV MU SC MG TZ UG RW SN CI CM CD CG AO ZM ZW MZ NA BW LS SZ MW SD SS LY SO DJ ER TG BJ BF ML NE MR GM GN GW SL LR GA GQ CF TD BI KM CV ST`.split(/\s+/);

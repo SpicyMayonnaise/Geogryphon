@@ -1,7 +1,6 @@
 # Endless Geography Trivia (V13.1)
 
-Open `index.html` in a browser. No install and no server needed. If you would rather have one file, run
-`python3 build_single.py` and open `geogryphon_single.html`.
+Open `index.html` in a browser. No install and no server needed.
 
 The map needs internet for the amCharts scripts (Flag mode needs it for flag images). Country data is bundled.
 
@@ -44,5 +43,5 @@ Invalid jumps are ignored and logged to the console.
 ## Data notes
 
 - Populations are rounded estimates (about 2024). Population questions skip countries within 6% of a band edge.
-- "Playable" = the 193 UN members plus Vatican City, Palestine and Taiwan. Territories appear in Flag mode only.
+- "Playable" = the 193 UN members plus Vatican City and Taiwan. Territories appear in Flag mode only.
 - Language lists are official/co-official languages, trimmed to avoid obscure or disputed entries.

@@ -13,6 +13,9 @@
   --hot:#ff5d73;
   --good:#3ee08f;
   --bad:#ff4d6d;
+  /* colour blind mode (html.cb): right/wrong become blue/orange, apart for every colour-blind type */
+  --cb-good:#5cb3ff;
+  --cb-bad:#ff9a2e;
   --map-land:#4a3fb0;
   --map-sea:#140f38;
   --scrim:#0d0a26e6;
@@ -212,6 +215,16 @@ h1,h2,.stat b,.mode b {
   gap:var(--s-8);
 }
 
+/* Difficulty has five options (Free Play included); expertise keeps four. */
+.difficulty:not(.expertise) {
+  grid-template-columns:repeat(5,1fr);
+}
+
+/* Free Play: no clock, so the timer bar is hidden (its space is kept so the layout does not jump). */
+.freePlay .timerTrack {
+  visibility:hidden;
+}
+
 .difficulty input {
   position:absolute;
   opacity:0;
@@ -261,7 +274,7 @@ h1,h2,.stat b,.mode b {
 .mode {
   width:100%;
   padding:var(--s-24);
-  text-align:left;
+  text-align:start;
   cursor:pointer;
   box-shadow:0 4px 0 var(--edge);
   transition:transform var(--press),box-shadow var(--press);
@@ -412,6 +425,11 @@ h1,h2,.stat b,.mode b {
   transform-origin:left;
 }
 
+/* Right to left (Hebrew): the timer shrinks towards the right edge. */
+[dir=rtl] .timerBar {
+  transform-origin:right;
+}
+
 .timerTrack.penalty {
   animation:timerPenalty .48s ease;
   background:var(--bad);
@@ -469,7 +487,7 @@ h1,h2,.stat b,.mode b {
 .answer {
   min-height:64px;
   padding:var(--s-12) var(--s-16);
-  text-align:left;
+  text-align:start;
   border:0;
   border-radius:var(--r-14);
   background:var(--surface-2);
@@ -483,8 +501,12 @@ h1,h2,.stat b,.mode b {
   transition:transform var(--press),box-shadow var(--press);
 }
 
-.answer:hover {
-  box-shadow:0 4px 0 var(--edge),inset 0 0 0 2px var(--accent);
+/* Hover ring only for real mouse hover. On touch, :hover sticks to whatever is under the finger, and a new
+   round's tile in the same spot would start out ringed. .fresh (set each round) waits for the mouse to move. */
+@media(hover:hover) {
+  .answers:not(.fresh) .answer:hover {
+    box-shadow:0 4px 0 var(--edge),inset 0 0 0 2px var(--accent);
+  }
 }
 
 .answer:active {
@@ -520,7 +542,7 @@ h1,h2,.stat b,.mode b {
 
 .mapControls {
   position:absolute;
-  left:var(--s-16);
+  inset-inline-start:var(--s-16);
   top:var(--s-16);
   z-index:8;
   display:grid;
@@ -564,10 +586,18 @@ h1,h2,.stat b,.mode b {
   font-size:var(--fs-18);
 }
 
-.menuMute {
+/* Menu corner: Archive, Settings and Mute side by side */
+.menuTools {
   position:absolute;
   top:var(--s-16);
-  right:var(--s-16);
+  inset-inline-end:var(--s-16);
+  z-index:2;
+  display:flex;
+  gap:var(--s-8);
+}
+
+.menuTools .mapControl {
+  font-size:var(--fs-18);
 }
 
 .mapHint {
@@ -587,7 +617,7 @@ h1,h2,.stat b,.mode b {
 
 .hoverFlag {
   position:absolute;
-  right:var(--s-16);
+  inset-inline-end:var(--s-16);
   top:var(--s-16);
   z-index:5;
   width:155px;
@@ -831,13 +861,64 @@ h1,h2,.stat b,.mode b {
   }
 }
 
+/* Leaderboard button and sheet: only used on narrow screens (see the 1200px query). */
+.boardBtn {
+  display:none;
+  position:absolute;
+  right:var(--s-16); /* stays right in RTL too: the amCharts logo (licence) is bottom-left */
+  bottom:var(--s-16);
+  z-index:9;
+  font-size:var(--fs-18);
+}
+
+.boardScrim {
+  display:none;
+}
+
+/* Narrow screens: the play column fills the screen and the page never scrolls during a run.
+   The leaderboard becomes a sheet that slides up from the bottom (🏆 button). */
 @media(max-width:1200px) {
   .gamegrid {
     grid-template-columns:1fr;
   }
+  html:has(#game:not(.hidden)),body:has(#game:not(.hidden)) {
+    height:100%;
+    overflow:hidden;
+    overscroll-behavior:none;
+  }
+  body:has(#game:not(.hidden)) .wrap {
+    min-height:0;
+  }
+  .boardBtn {
+    display:block;
+  }
+  /* Flag mode: answer tiles fill the bottom, so the button sits top-right of the flag instead. */
+  [data-game-mode=flag] .boardBtn {
+    top:var(--s-12);
+    bottom:auto;
+    right:var(--s-12);
+  }
   .side {
-    order:2;
-    max-height:none;
+    position:fixed;
+    left:0;
+    right:0;
+    bottom:0;
+    z-index:31;
+    max-height:70dvh;
+    border-radius:var(--r-24) var(--r-24) 0 0;
+    padding-bottom:var(--s-32);
+    transform:translateY(105%);
+    transition:transform .25s ease;
+  }
+  .side.open {
+    transform:none;
+  }
+  .boardScrim.show {
+    display:block;
+    position:fixed;
+    inset:0;
+    z-index:30;
+    background:var(--scrim);
   }
 }
 
@@ -851,8 +932,11 @@ h1,h2,.stat b,.mode b {
   :root {
     --pad:var(--s-8);
   }
-  .difficulty,.answers {
+  .difficulty,.difficulty:not(.expertise),.answers {
     grid-template-columns:1fr 1fr;
+  }
+  .difficulty label[for=free] {
+    grid-column:span 2;
   }
   .play {
     padding:var(--s-4);
@@ -868,7 +952,7 @@ h1,h2,.stat b,.mode b {
   .stats {
     position:absolute;
     top:0;
-    right:0;
+    inset-inline-end:0;
   }
   .stat {
     min-width:0;
@@ -892,6 +976,303 @@ h1,h2,.stat b,.mode b {
   .head .kicker {
     display:table;
     font-size:var(--fs-12);
+  }
+}
+
+/* ---------- Settings window ---------- */
+
+.settingsIn h2 {
+  margin:var(--s-8) 0 var(--s-16);
+}
+
+.settingRow {
+  margin-bottom:var(--s-16);
+}
+
+.settingRow > label,.settingLabel {
+  display:block;
+  margin-bottom:var(--s-8);
+  color:var(--text-2);
+  font-family:var(--font-display);
+  font-weight:var(--fw-600);
+}
+
+.volumeRow {
+  display:flex;
+  align-items:center;
+  gap:var(--s-12);
+}
+
+.volumeRow input {
+  flex:1;
+  accent-color:var(--accent);
+}
+
+.volumeValue {
+  min-width:3em;
+  text-align:right;
+  font-weight:var(--fw-700);
+}
+
+.difficulty.twoUp {
+  grid-template-columns:1fr 1fr;
+}
+
+.difficulty input:disabled+label {
+  opacity:.5;
+  cursor:not-allowed;
+  box-shadow:none;
+}
+
+.settingHint {
+  margin:var(--s-8) 0 0;
+  font-size:var(--fs-14);
+}
+
+/* ---------- Colour blind mode (html.cb) ---------- */
+
+:root.cb {
+  --good:var(--cb-good);
+  --bad:var(--cb-bad);
+}
+
+.cb .flagbox img,.cb .hoverFlag img,.cb .studyFlag,.cb .archiveCard img {
+  filter:url(#daltonize);
+}
+
+/* Holds the SVG filter definitions; takes no space. */
+.svgDefs {
+  position:absolute;
+  width:0;
+  height:0;
+  overflow:hidden;
+}
+
+/* ---------- Archive ---------- */
+
+.archive {
+  max-width:1400px;
+  margin:auto;
+  padding-bottom:var(--s-32);
+  /* Hidden pop-outs of edge cards reach past the screen; clip so the page never scrolls sideways. */
+  overflow-x:clip;
+}
+
+.archiveHead h1 {
+  margin:var(--s-8) 0 var(--s-16);
+  font-size:var(--fs-44);
+  line-height:1.05;
+}
+
+.archiveHead .btn {
+  margin-bottom:var(--s-16);
+}
+
+.archiveSearch {
+  width:100%;
+  max-width:520px;
+  padding:var(--s-12) var(--s-16);
+  border:0;
+  border-radius:var(--r-14);
+  background:var(--surface-1);
+  color:var(--text);
+  box-shadow:inset 0 0 0 2px var(--surface-2);
+}
+
+.archiveSearch::placeholder {
+  color:var(--text-2);
+}
+
+.archiveFilters {
+  display:flex;
+  flex-wrap:wrap;
+  gap:var(--s-8);
+  margin-top:var(--s-12);
+}
+
+/* Chip: same pill as the mode chip, pressed state uses the accent */
+.archiveChip {
+  padding:var(--s-4) var(--s-12);
+  border:0;
+  border-radius:var(--r-pill);
+  background:var(--surface-2);
+  color:var(--text);
+  box-shadow:0 4px 0 var(--edge);
+  font-family:var(--font-display);
+  font-size:var(--fs-14);
+  font-weight:var(--fw-600);
+  cursor:pointer;
+  transition:transform var(--press),box-shadow var(--press);
+}
+
+.archiveChip:hover {
+  color:var(--accent);
+}
+
+.archiveChip[aria-pressed=true] {
+  background:var(--accent);
+  color:var(--on-accent);
+  box-shadow:0 2px 0 var(--accent-edge);
+  transform:translateY(2px);
+}
+
+.archiveCount {
+  margin:var(--s-12) 0;
+  font-size:var(--fs-14);
+}
+
+.archiveGrid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+  gap:var(--s-16);
+}
+
+/* Card, idle: flag with the name below. Pressable like every other tile. */
+.archiveCard {
+  position:relative;
+  padding:0;
+  border:0;
+  background:none;
+  color:var(--text);
+  text-align:center;
+  cursor:pointer;
+}
+
+.archiveFace {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:var(--s-8);
+  height:100%;
+  padding:var(--s-12);
+  border-radius:var(--r-14);
+  background:var(--surface-1);
+  box-shadow:0 4px 0 var(--edge);
+  transition:transform var(--press),box-shadow var(--press);
+}
+
+.archiveFace img,.archivePop .archiveFlag {
+  width:100%;
+  aspect-ratio:3/2;
+  object-fit:contain;
+  background:var(--flag-frame);
+  border-radius:var(--r-8);
+}
+
+.archiveFace img.loading {
+  opacity:.35;
+}
+
+.archiveName {
+  font-family:var(--font-display);
+  font-weight:var(--fw-600);
+  font-size:var(--fs-14);
+  overflow-wrap:anywhere;
+}
+
+/* Card, popped out: a larger card over the grid with the country's details. */
+.archivePop {
+  position:absolute;
+  z-index:10;
+  top:50%;
+  left:50%;
+  width:260px;
+  padding:var(--s-16);
+  border-radius:var(--r-24);
+  background:var(--surface-2);
+  box-shadow:0 6px 0 var(--edge),0 0 0 3px var(--accent);
+  text-align:start;
+  opacity:0;
+  pointer-events:none;
+  transform:translate(-50%,-50%) scale(.85);
+  transition:opacity .15s,transform .15s;
+}
+
+.archiveCard.edgeL .archivePop {
+  left:0;
+  transform:translate(0,-50%) scale(.85);
+}
+
+.archiveCard.edgeR .archivePop {
+  left:auto;
+  right:0;
+  transform:translate(0,-50%) scale(.85);
+}
+
+.archiveCard.open .archivePop {
+  opacity:1;
+  pointer-events:auto;
+  transform:translate(-50%,-50%) scale(1);
+}
+
+.archiveCard.open.edgeL .archivePop,.archiveCard.open.edgeR .archivePop {
+  transform:translate(0,-50%) scale(1);
+}
+
+@media(hover:hover) {
+  .archiveCard:hover .archivePop {
+    opacity:1;
+    transform:translate(-50%,-50%) scale(1);
+  }
+  .archiveCard.edgeL:hover .archivePop,.archiveCard.edgeR:hover .archivePop {
+    transform:translate(0,-50%) scale(1);
+  }
+  .archiveCard:hover {
+    z-index:11;
+  }
+}
+
+.archiveCard.open {
+  z-index:11;
+}
+
+.archivePop h3 {
+  margin:var(--s-8) 0;
+  font-family:var(--font-display);
+  font-size:var(--fs-28);
+  line-height:1.1;
+  text-align:center;
+}
+
+.archiveInfoRow {
+  font-size:var(--fs-14);
+  margin-top:var(--s-4);
+}
+
+.archiveInfoLabel {
+  color:var(--text-2);
+  font-weight:var(--fw-700);
+}
+
+.archiveTag {
+  display:inline-block;
+  margin-top:var(--s-8);
+  padding:var(--s-4) var(--s-12);
+  border-radius:var(--r-pill);
+  background:var(--hot);
+  color:var(--on-accent);
+  font-size:var(--fs-12);
+  font-weight:var(--fw-700);
+}
+
+@media(max-width:620px) {
+  /* The corner buttons (Archive, Settings, Mute) get their own strip above the heading. */
+  .menu {
+    padding-top:calc(var(--s-32) * 2);
+  }
+  .menuTools .mapControl {
+    width:44px;
+    height:44px;
+  }
+  .archiveGrid {
+    grid-template-columns:repeat(auto-fill,minmax(110px,1fr));
+    gap:var(--s-12);
+  }
+  .archiveHead h1 {
+    font-size:var(--fs-28);
+  }
+  .archivePop {
+    width:min(240px,calc(100vw - 2 * var(--s-16)));
   }
 }
 

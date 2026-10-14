@@ -4,7 +4,8 @@
 let questionBag=[],questionHistory=[],lastCategories=[],triviaSinceMulti=0;
 function resetQuestions(){questionBag=[];questionHistory=[];lastCategories=[];triviaSinceMulti=0}
 
-function populationBands(){return[{label:'under 1 million',min:0,max:1e6},{label:'between 1 and 5 million',min:1e6,max:5e6},{label:'between 5 and 15 million',min:5e6,max:15e6},{label:'between 15 and 50 million',min:15e6,max:50e6},{label:'between 50 and 100 million',min:50e6,max:100e6},{label:'over 100 million',min:100e6,max:Infinity}]}
+/* Band labels are language-pack keys (band.<label>). */
+function populationBands(){return[{label:'under1m',min:0,max:1e6},{label:'1to5m',min:1e6,max:5e6},{label:'5to15m',min:5e6,max:15e6},{label:'15to50m',min:15e6,max:50e6},{label:'50to100m',min:50e6,max:100e6},{label:'over100m',min:100e6,max:Infinity}]}
 /* Bundled populations are rounded estimates, so a country within 6% of a band edge could land on either
    side. Those countries are left out of population questions rather than risk a wrong "correct" answer. */
 function nearPopulationEdge(p){return[1e6,5e6,15e6,50e6,100e6].some(e=>Math.abs(p-e)/e<.06)}
@@ -12,16 +13,16 @@ function nearPopulationEdge(p){return[1e6,5e6,15e6,50e6,100e6].some(e=>Math.abs(
    To add a category, add a row here. */
 const QUESTION_TYPES=[
   {category:'language',groups:cp=>[...new Set(cp.flatMap(c=>c.languages||[]))],match:(c,g)=>(c.languages||[]).includes(g),
-   single:(ct,g)=>`Which country in ${ct} has ${g} as an official language?`,multi:(ct,g,n)=>`Pick ${n} countries in ${ct} where ${g} is an official language.`},
+   single:(ct,g)=>t('q.languageSingle',{continent:continentName(ct),group:languageName(g)}),multi:(ct,g,n)=>t('q.languageMulti',{count:n,continent:continentName(ct),group:languageName(g)})},
   {category:'population',groups:()=>populationBands().map(b=>b.label),match:(c,g)=>{let b=populationBands().find(x=>x.label===g);return c.population>0&&!nearPopulationEdge(c.population)&&c.population>=b.min&&c.population<b.max},
-   single:(ct,g)=>`Which country in ${ct} has a population ${g}?`,multi:(ct,g,n)=>`Pick ${n} countries in ${ct} with populations ${g}.`}
+   single:(ct,g)=>t('q.populationSingle',{continent:continentName(ct),group:t(`band.${g}`)}),multi:(ct,g,n)=>t('q.populationMulti',{count:n,continent:continentName(ct),group:t(`band.${g}`)})}
 ];
 let _cq=null,_cqKey='';
 function candidateQuestions(){
-  let pool=triviaPool(),key=`${expertise}|${pool.length}|${pool.filter(c=>c.population).length}|${pool.filter(c=>c.languages?.length).length}|${pool.filter(c=>c.continent).length}`;
+  let pool=triviaPool(),key=`${currentLang}|${expertise}|${pool.length}|${pool.filter(c=>c.population).length}|${pool.filter(c=>c.languages?.length).length}|${pool.filter(c=>c.continent).length}`;
   if(_cq&&_cqKey===key)return _cq;
   let out=[];
-  pool.filter(c=>c.capital).forEach(c=>out.push({category:'capital',multi:false,required:1,eligible:[c.code],text:`Which country has ${c.capital} as its capital?`,signature:`capital:${c.code}`}));
+  pool.filter(c=>c.capital).forEach(c=>out.push({category:'capital',multi:false,required:1,eligible:[c.code],text:t('q.capital',{capital:capitalName(c)}),signature:`capital:${c.code}`}));
   let enriched=pool.filter(c=>c.continent),continents=[...new Set(enriched.map(c=>c.continent))];
   for(let continent of continents){let cp=enriched.filter(c=>c.continent===continent);
     for(let t of QUESTION_TYPES)for(let g of t.groups(cp)){
@@ -54,5 +55,5 @@ function nextTriviaQuestion(){
   }
   let options=shuffle(triviaPool().filter(x=>x.capital&&!questionHistory.includes(`capital:${x.code}`)));if(!options.length)options=shuffle(triviaPool().filter(x=>x.capital));
   let c=options[0];if(!c)throw new Error('No valid trivia questions are available.');
-  return finishQuestion({category:'capital',multi:false,required:1,eligible:[c.code],text:`Which country has ${c.capital} as its capital?`,signature:`capital:${c.code}`})
+  return finishQuestion({category:'capital',multi:false,required:1,eligible:[c.code],text:t('q.capital',{capital:capitalName(c)}),signature:`capital:${c.code}`})
 }
