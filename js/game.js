@@ -12,7 +12,7 @@
      - every delayed callback is cancelled whenever a run ends, and every await re-checks `stale(rid)`
 */
 
-const DIFFICULTY_SECONDS = { easy: 20, normal: 10, hard: 5, extreme: 3 };
+const DIFFICULTY_SECONDS = { easy: 60, normal: 30, hard: 10, extreme: 5 };
 // Free Play has no clock: no countdown, no time penalty. A wrong flag still ends the run.
 const isFreePlay = () => difficulty === 'free';
 // Share of the clock left (1 = all of it). Free Play counts as a middling answer for reactions and sounds.

@@ -17,10 +17,10 @@ LANG_PACKS.he = {
   'menu.archive': 'פתיחת הארכיון',
   'menu.settings': 'הגדרות',
 
-  'diff.easy': 'קל', 'diff.easySub': '20 שניות',
-  'diff.normal': 'רגיל', 'diff.normalSub': '10 שניות',
-  'diff.hard': 'קשה', 'diff.hardSub': '5 שניות',
-  'diff.extreme': 'קיצוני', 'diff.extremeSub': '3 שניות',
+  'diff.easy': 'קל', 'diff.easySub': 'דקה',
+  'diff.normal': 'רגיל', 'diff.normalSub': '30 שניות',
+  'diff.hard': 'קשה', 'diff.hardSub': '10 שניות',
+  'diff.extreme': 'קיצוני', 'diff.extremeSub': '5 שניות',
   'diff.free': 'משחק חופשי', 'diff.freeSub': 'בלי טיימר',
 
   'exp.novice': 'מתחיל', 'exp.noviceSub': '70 המדינות המוכרות',
