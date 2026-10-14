@@ -9,8 +9,7 @@ no framework, no bundler, no server. The only external code is amCharts (map) lo
 - Run: open `index.html` in a browser. Map and trivia modes need internet for amCharts; flags need it for images.
   Fonts (Fredoka, Nunito) come from Google Fonts; offline the game falls back to `system-ui`.
 - Preview server: `node .claude/serve.js` serves the folder on http://localhost:8765 (`.claude/launch.json`).
-- One-file build: `python3 build_single.py` writes `geogryphon_single.html`. It is generated, so never edit it by hand.
-  Python is not installed on the main dev machine, so `geogryphon_single.html` is stale (pre-V14) until rebuilt.
+- There is no one-file build any more (`build_single.py` and `geogryphon_single.html` were removed on purpose).
 - There is no test runner. Checks are plain Node scripts in `tools/` (exit 1 on failure):
   - after CSS edits: `node tools/check-tokens.js` (no hardcoded design values) and `node tools/contrast.js` (WCAG AA)
   - after JS edits: `node --check <file>`, `node tools/test-tokens-js.js`, `node tools/test-answer-states.js`,

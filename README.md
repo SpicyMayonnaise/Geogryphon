@@ -1,7 +1,6 @@
 # Endless Geography Trivia (V13.1)
 
-Open `index.html` in a browser. No install and no server needed. If you would rather have one file, run
-`python3 build_single.py` and open `geogryphon_single.html`.
+Open `index.html` in a browser. No install and no server needed.
 
 The map needs internet for the amCharts scripts (Flag mode needs it for flag images). Country data is bundled.
 
